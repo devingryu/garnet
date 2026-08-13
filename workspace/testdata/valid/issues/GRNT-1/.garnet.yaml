@@ -1,0 +1,10 @@
+type: story
+status: in-progress
+reporter: devingryu@korea.ac.kr
+assignee: devingryu@korea.ac.kr
+links:
+  - { type: blocks, target: GRNT-5 }
+
+timeline:
+  - { at: 2026-08-13T10:00:00Z, by: devingryu@korea.ac.kr, kind: status, from: todo, to: in-progress }
+  - { at: 2026-08-13T14:00:00Z, by: devingryu@korea.ac.kr, kind: note, body: "Parked — link syntax undecided." }
