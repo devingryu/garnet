@@ -1,3 +1,3 @@
 [submodule "docs"]
 	path = docs
-	url = /Users/hyungseok/personal-repos/garnet-docs
+	url = https://github.com/devingryu/garnet-docs.git
