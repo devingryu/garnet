@@ -3,6 +3,7 @@ package workspace
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -18,7 +19,7 @@ func TestListDocuments(t *testing.T) {
 		paths = append(paths, d.Path)
 	}
 
-	if !contains(paths, "decisions/0001-test-decision.md") {
+	if !slices.Contains(paths, "decisions/0001-test-decision.md") {
 		t.Errorf("expected decisions/0001-test-decision.md in %v", paths)
 	}
 	for _, p := range paths {

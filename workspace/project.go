@@ -113,12 +113,12 @@ func AddProjectMember(root, projectKey, name, email string) (*Project, error) {
 	dir := filepath.Join(root, "projects", projectKey)
 	project, err := loadProject(dir)
 	if err != nil {
-		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+		return nil, errProjectLoadFailed(projectKey, err)
 	}
 
 	for _, m := range project.Members {
 		if m.Email == email {
-			return nil, fmt.Errorf("%q is already a member of %q", email, projectKey)
+			return nil, errMemberAlreadyExists(email, projectKey)
 		}
 	}
 	project.Members = append(project.Members, Member{Name: name, Email: email})
@@ -136,7 +136,7 @@ func SetProjectIssueTypes(root, projectKey string, types []string) (*Project, er
 	dir := filepath.Join(root, "projects", projectKey)
 	project, err := loadProject(dir)
 	if err != nil {
-		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+		return nil, errProjectLoadFailed(projectKey, err)
 	}
 
 	project.IssueTypes = types
@@ -155,7 +155,7 @@ func SetProjectIssueTypes(root, projectKey string, types []string) (*Project, er
 func SetWorkflow(root, projectKey string, statuses []Status, transitions []Transition) (*Project, error) {
 	dir := filepath.Join(root, "projects", projectKey)
 	if _, err := loadProject(dir); err != nil {
-		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+		return nil, errProjectLoadFailed(projectKey, err)
 	}
 
 	ids := map[string]bool{}
@@ -164,11 +164,11 @@ func SetWorkflow(root, projectKey string, statuses []Status, transitions []Trans
 	}
 	for _, t := range transitions {
 		if !ids[t.From] {
-			return nil, fmt.Errorf("transition references undeclared status %q", t.From)
+			return nil, errTransitionUnknownStatus(t.From)
 		}
 		for _, to := range t.To {
 			if !ids[to] {
-				return nil, fmt.Errorf("transition references undeclared status %q", to)
+				return nil, errTransitionUnknownStatus(to)
 			}
 		}
 	}
@@ -199,7 +199,7 @@ func setProjectArchived(root, projectKey string, archived bool) (*Project, error
 	dir := filepath.Join(root, "projects", projectKey)
 	project, err := loadProject(dir)
 	if err != nil {
-		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+		return nil, errProjectLoadFailed(projectKey, err)
 	}
 	project.Archived = archived
 	if err := writeProjectFrontmatter(dir, project); err != nil {
@@ -214,12 +214,12 @@ func AddProjectRepo(root, projectKey, url, path string) (*Project, error) {
 	dir := filepath.Join(root, "projects", projectKey)
 	project, err := loadProject(dir)
 	if err != nil {
-		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+		return nil, errProjectLoadFailed(projectKey, err)
 	}
 
 	for _, r := range project.Repos {
 		if r.Path == path {
-			return nil, fmt.Errorf("a repo is already declared at path %q", path)
+			return nil, errRepoPathTaken(path)
 		}
 	}
 	project.Repos = append(project.Repos, Repo{URL: url, Path: path})
@@ -236,7 +236,7 @@ func RemoveProjectRepo(root, projectKey, path string) (*Project, error) {
 	dir := filepath.Join(root, "projects", projectKey)
 	project, err := loadProject(dir)
 	if err != nil {
-		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+		return nil, errProjectLoadFailed(projectKey, err)
 	}
 
 	found := false
@@ -249,7 +249,7 @@ func RemoveProjectRepo(root, projectKey, path string) (*Project, error) {
 		kept = append(kept, r)
 	}
 	if !found {
-		return nil, fmt.Errorf("no repo declared at path %q", path)
+		return nil, errRepoNotDeclared(path)
 	}
 	project.Repos = kept
 

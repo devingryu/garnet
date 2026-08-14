@@ -1,10 +1,10 @@
 package workspace
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -69,8 +69,6 @@ type Issue struct {
 	// .garnet.yaml and issue.md — attached docs are not parsed until M4.
 	Documents []string `json:"documents"`
 }
-
-var ErrIssueNotFound = errors.New("issue not found")
 
 // projectKeyFromID returns the project key portion of an issue ID, e.g.
 // "GRNT-1" -> "GRNT".
@@ -168,7 +166,7 @@ func nextIssueID(root, projectKey string) (string, error) {
 		return "", err
 	}
 
-	max := 0
+	highest := 0
 	prefix := projectKey + "-"
 	for _, name := range names {
 		if !strings.HasPrefix(name, prefix) {
@@ -178,26 +176,26 @@ func nextIssueID(root, projectKey string) (string, error) {
 		if err != nil {
 			continue // not a well-formed ID; ignore rather than fail the scan
 		}
-		if n > max {
-			max = n
+		if n > highest {
+			highest = n
 		}
 	}
-	return fmt.Sprintf("%s-%d", projectKey, max+1), nil
+	return fmt.Sprintf("%s-%d", projectKey, highest+1), nil
 }
 
 // CreateIssue creates a new issue under the given project. It requires an
 // identity to be configured (see Identity) to record a reporter.
 func CreateIssue(root, projectKey, issueType, title string) (*Issue, error) {
 	if strings.TrimSpace(title) == "" {
-		return nil, errors.New("title is required")
+		return nil, errTitleRequired()
 	}
 
 	project, err := loadProject(filepath.Join(root, "projects", projectKey))
 	if err != nil {
-		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+		return nil, errProjectLoadFailed(projectKey, err)
 	}
-	if len(project.IssueTypes) > 0 && !contains(project.IssueTypes, issueType) {
-		return nil, fmt.Errorf("issue type %q is not declared by project %q", issueType, projectKey)
+	if len(project.IssueTypes) > 0 && !slices.Contains(project.IssueTypes, issueType) {
+		return nil, errIssueTypeNotDeclared(issueType, projectKey)
 	}
 
 	identity, err := LoadIdentity(root)
@@ -205,7 +203,7 @@ func CreateIssue(root, projectKey, issueType, title string) (*Issue, error) {
 		return nil, fmt.Errorf("loading identity: %w", err)
 	}
 	if identity == nil {
-		return nil, errors.New("no identity configured for this workspace — set one up before creating issues")
+		return nil, errIdentityRequired("creating issues")
 	}
 
 	id, err := nextIssueID(root, projectKey)
@@ -254,7 +252,7 @@ func UpdateIssueBody(root, issueID, body string) error {
 // left titleless.
 func SetIssueTitle(root, issueID, title string) (*Issue, error) {
 	if strings.TrimSpace(title) == "" {
-		return nil, errors.New("title is required")
+		return nil, errTitleRequired()
 	}
 	dir := filepath.Join(root, "issues", issueID)
 	meta, err := readIssueMeta(dir)
@@ -291,7 +289,7 @@ func TransitionIssueStatus(root, issueID, newStatus string) (*Issue, error) {
 		return nil, fmt.Errorf("loading identity: %w", err)
 	}
 	if identity == nil {
-		return nil, errors.New("no identity configured for this workspace — set one up before changing status")
+		return nil, errIdentityRequired("changing status")
 	}
 
 	oldStatus := meta.Status
@@ -315,7 +313,7 @@ func TransitionIssueStatus(root, issueID, newStatus string) (*Issue, error) {
 // Requires an identity to attribute the note to someone.
 func AddTimelineNote(root, issueID, body string) (*Issue, error) {
 	if strings.TrimSpace(body) == "" {
-		return nil, errors.New("note body is required")
+		return nil, errNoteBodyRequired()
 	}
 
 	dir := filepath.Join(root, "issues", issueID)
@@ -329,7 +327,7 @@ func AddTimelineNote(root, issueID, body string) (*Issue, error) {
 		return nil, fmt.Errorf("loading identity: %w", err)
 	}
 	if identity == nil {
-		return nil, errors.New("no identity configured for this workspace — set one up before adding a note")
+		return nil, errIdentityRequired("adding a note")
 	}
 
 	meta.Timeline = append(meta.Timeline, TimelineEntry{
@@ -354,18 +352,18 @@ func validateTransition(wf *Workflow, from, to string) error {
 		}
 	}
 	if !validStatus {
-		return fmt.Errorf("%q is not a status declared by this project's workflow", to)
+		return errStatusNotDeclared(to)
 	}
 
 	for _, t := range wf.Transitions {
 		if t.From != from {
 			continue
 		}
-		if contains(t.To, to) {
+		if slices.Contains(t.To, to) {
 			return nil
 		}
 	}
-	return fmt.Errorf("invalid transition from %q to %q", from, to)
+	return errInvalidTransition(from, to)
 }
 
 // SetIssueAssignee sets the assignee (an email, per ADR 0005) on an issue.
@@ -382,7 +380,7 @@ func SetIssueAssignee(root, issueID, email string) (*Issue, error) {
 	if email != "" {
 		if project, err := loadProject(filepath.Join(root, "projects", projectKeyFromID(issueID))); err == nil && len(project.Members) > 0 {
 			if !isMember(project.Members, email) {
-				return nil, fmt.Errorf("%q is not a registered member of project %q", email, project.Key)
+				return nil, errNotAProjectMember(email, project.Key)
 			}
 		}
 	}
@@ -404,7 +402,7 @@ func SetIssueParent(root, issueID, parentID string) (*Issue, error) {
 	}
 	if parentID != "" {
 		if _, err := readIssueMeta(filepath.Join(root, "issues", parentID)); err != nil {
-			return nil, fmt.Errorf("parent %q: %w", parentID, err)
+			return nil, errParentNotFound(parentID, err)
 		}
 	}
 	meta.Parent = parentID
@@ -423,22 +421,13 @@ func AddIssueLink(root, issueID, linkType, target string) (*Issue, error) {
 		return nil, err
 	}
 	if _, err := readIssueMeta(filepath.Join(root, "issues", target)); err != nil {
-		return nil, fmt.Errorf("link target %q: %w", target, err)
+		return nil, errLinkTargetNotFound(target, err)
 	}
 	meta.Links = append(meta.Links, Link{Type: linkType, Target: target})
 	if err := writeIssueMeta(dir, meta); err != nil {
 		return nil, err
 	}
 	return loadIssue(dir, issueID)
-}
-
-func contains(list []string, s string) bool {
-	for _, v := range list {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
 
 func isMember(members []Member, email string) bool {

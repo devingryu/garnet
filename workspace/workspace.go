@@ -5,16 +5,11 @@
 package workspace
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 )
-
-// ErrNotAWorkspace is returned by Open when the given directory has neither
-// a projects/ nor an issues/ subdirectory.
-var ErrNotAWorkspace = errors.New("not a Garnet workspace: expected a \"projects\" or \"issues\" directory")
 
 // Workspace is the result of reading a workspace directory from disk.
 type Workspace struct {

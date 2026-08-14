@@ -75,15 +75,15 @@ func ListDocuments(root string) ([]Document, error) {
 func resolveDocumentPath(root, relPath string) (string, error) {
 	clean := filepath.Clean(filepath.FromSlash(relPath))
 	if filepath.IsAbs(clean) || clean == "." || strings.HasPrefix(clean, "..") {
-		return "", fmt.Errorf("invalid document path %q", relPath)
+		return "", errDocumentPathInvalid(relPath)
 	}
 	if !strings.HasSuffix(clean, ".md") {
-		return "", fmt.Errorf("only .md documents are supported, got %q", relPath)
+		return "", errDocumentNotMarkdown(relPath)
 	}
 
 	top := strings.SplitN(filepath.ToSlash(clean), "/", 2)[0]
 	if reservedTopLevelDirs[top] {
-		return "", fmt.Errorf("%q is reserved and not a document path", relPath)
+		return "", errDocumentPathReserved(relPath)
 	}
 
 	return filepath.Join(root, clean), nil
@@ -97,7 +97,7 @@ func ReadDocument(root, relPath string) (string, error) {
 	}
 	raw, err := os.ReadFile(abs)
 	if err != nil {
-		return "", fmt.Errorf("reading %q: %w", relPath, err)
+		return "", errDocumentUnreadable(relPath, err)
 	}
 	return string(raw), nil
 }

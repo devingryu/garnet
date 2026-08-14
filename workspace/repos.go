@@ -32,7 +32,7 @@ func CloneProjectRepos(root, projectKey string) (*CloneResult, error) {
 
 	project, err := loadProject(filepath.Join(root, "projects", projectKey))
 	if err != nil {
-		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+		return nil, errProjectLoadFailed(projectKey, err)
 	}
 
 	if len(project.Repos) == 0 {
