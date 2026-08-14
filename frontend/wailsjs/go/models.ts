@@ -1,5 +1,65 @@
 export namespace workspace {
 	
+	export class Backlink {
+	    kind: string;
+	    id: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Backlink(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kind = source["kind"];
+	        this.id = source["id"];
+	    }
+	}
+	export class BacklinkEntry {
+	    targetKind: string;
+	    target: string;
+	    sources: Backlink[];
+	
+	    static createFrom(source: any = {}) {
+	        return new BacklinkEntry(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.targetKind = source["targetKind"];
+	        this.target = source["target"];
+	        this.sources = this.convertValues(source["sources"], Backlink);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class Document {
+	    path: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Document(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	    }
+	}
 	export class Identity {
 	    name: string;
 	    email: string;
@@ -263,6 +323,8 @@ export namespace workspace {
 	    root: string;
 	    projects: Project[];
 	    issues: Issue[];
+	    documents: Document[];
+	    backlinks: BacklinkEntry[];
 	    warnings: string[];
 	
 	    static createFrom(source: any = {}) {
@@ -274,6 +336,8 @@ export namespace workspace {
 	        this.root = source["root"];
 	        this.projects = this.convertValues(source["projects"], Project);
 	        this.issues = this.convertValues(source["issues"], Issue);
+	        this.documents = this.convertValues(source["documents"], Document);
+	        this.backlinks = this.convertValues(source["backlinks"], BacklinkEntry);
 	        this.warnings = source["warnings"];
 	    }
 	

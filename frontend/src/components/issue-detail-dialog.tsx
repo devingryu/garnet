@@ -6,6 +6,7 @@ import {Textarea} from '@/components/ui/textarea';
 import {Dialog, DialogContent, DialogTitle} from '@/components/ui/dialog';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {allowedNextStatuses} from '@/lib/workflow';
+import {backlinksFor} from '@/lib/documents';
 import {
     AddIssueLink,
     AddProjectMember,
@@ -39,18 +40,24 @@ export function IssueDetailDialog({
     path,
     issue,
     project,
+    ws,
     open,
     onOpenChange,
     onMutate,
     onProjectMutate,
+    onOpenDocument,
+    onOpenIssue,
 }: {
     path: string;
     issue: workspace.Issue | null;
     project: workspace.Project | undefined;
+    ws: workspace.Workspace;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onMutate: (updated: workspace.Issue) => void;
     onProjectMutate: (updated: workspace.Project) => void;
+    onOpenDocument: (path: string) => void;
+    onOpenIssue: (id: string) => void;
 }) {
     const [title, setTitle] = useState('');
     const [body, setBody] = useState('');
@@ -101,6 +108,7 @@ export function IssueDetailDialog({
     // workflow allows moving to from here.
     const currentStatusOption = workflow?.statuses.find((s) => s.id === issue.status);
     const statusOptions = currentStatusOption ? [currentStatusOption, ...next] : next;
+    const referencedBy = backlinksFor(ws, 'issue', issue.id);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -269,6 +277,23 @@ export function IssueDetailDialog({
                                 >
                                     Add link
                                 </Button>
+                            </div>
+                        </Field>
+
+                        <Field label="Referenced by">
+                            <div className="flex flex-col gap-1">
+                                {referencedBy.map((s, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => (s.kind === 'document' ? onOpenDocument(s.id) : onOpenIssue(s.id))}
+                                        className="text-left text-sm text-primary hover:underline"
+                                    >
+                                        {s.id}
+                                    </button>
+                                ))}
+                                {referencedBy.length === 0 && (
+                                    <p className="text-sm text-muted-foreground">Nothing yet.</p>
+                                )}
                             </div>
                         </Field>
                     </div>

@@ -26,6 +26,10 @@ export function OpenWorkspace(arg1) {
   return window['go']['main']['App']['OpenWorkspace'](arg1);
 }
 
+export function ReadDocument(arg1, arg2) {
+  return window['go']['main']['App']['ReadDocument'](arg1, arg2);
+}
+
 export function SelectWorkspaceFolder() {
   return window['go']['main']['App']['SelectWorkspaceFolder']();
 }
@@ -52,4 +56,8 @@ export function TransitionIssueStatus(arg1, arg2, arg3) {
 
 export function UpdateIssueBody(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateIssueBody'](arg1, arg2, arg3);
+}
+
+export function WriteDocument(arg1, arg2, arg3) {
+  return window['go']['main']['App']['WriteDocument'](arg1, arg2, arg3);
 }

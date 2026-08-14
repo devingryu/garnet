@@ -14,6 +14,8 @@ export function GetIdentity(arg1:string):Promise<workspace.Identity>;
 
 export function OpenWorkspace(arg1:string):Promise<workspace.Workspace>;
 
+export function ReadDocument(arg1:string,arg2:string):Promise<string>;
+
 export function SelectWorkspaceFolder():Promise<string>;
 
 export function SetIdentity(arg1:string,arg2:string,arg3:string):Promise<void>;
@@ -27,3 +29,5 @@ export function SetIssueTitle(arg1:string,arg2:string,arg3:string):Promise<works
 export function TransitionIssueStatus(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
 
 export function UpdateIssueBody(arg1:string,arg2:string,arg3:string):Promise<void>;
+
+export function WriteDocument(arg1:string,arg2:string,arg3:string):Promise<void>;

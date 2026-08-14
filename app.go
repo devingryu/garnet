@@ -93,3 +93,13 @@ func (a *App) AddProjectMember(path, projectKey, name, email string) (*workspace
 func (a *App) AddTimelineNote(path, issueID, body string) (*workspace.Issue, error) {
 	return workspace.AddTimelineNote(path, issueID, body)
 }
+
+// ReadDocument returns a document's raw content.
+func (a *App) ReadDocument(path, relPath string) (string, error) {
+	return workspace.ReadDocument(path, relPath)
+}
+
+// WriteDocument creates or overwrites a document.
+func (a *App) WriteDocument(path, relPath, content string) error {
+	return workspace.WriteDocument(path, relPath, content)
+}

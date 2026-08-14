@@ -18,9 +18,13 @@ var ErrNotAWorkspace = errors.New("not a Garnet workspace: expected a \"projects
 
 // Workspace is the result of reading a workspace directory from disk.
 type Workspace struct {
-	Root     string    `json:"root"`
-	Projects []Project `json:"projects"`
-	Issues   []Issue   `json:"issues"`
+	Root      string     `json:"root"`
+	Projects  []Project  `json:"projects"`
+	Issues    []Issue    `json:"issues"`
+	Documents []Document `json:"documents"`
+	// Backlinks is derived by scanning markdown links, never stored — see
+	// ADR 0004 and buildLinkIndex.
+	Backlinks []BacklinkEntry `json:"backlinks"`
 	// Warnings lists items that failed to parse and were skipped, so a
 	// single malformed file doesn't prevent the rest of the workspace
 	// from loading.
@@ -50,10 +54,12 @@ func Open(root string) (*Workspace, error) {
 	// Slices start non-nil so they marshal to JSON `[]` rather than `null` —
 	// frontend code can rely on .length always being defined.
 	ws := &Workspace{
-		Root:     root,
-		Projects: []Project{},
-		Issues:   []Issue{},
-		Warnings: []string{},
+		Root:      root,
+		Projects:  []Project{},
+		Issues:    []Issue{},
+		Documents: []Document{},
+		Backlinks: []BacklinkEntry{},
+		Warnings:  []string{},
 	}
 
 	if hasProjects {
@@ -85,6 +91,16 @@ func Open(root string) (*Workspace, error) {
 			ws.Issues = append(ws.Issues, *i)
 		}
 	}
+
+	documents, err := ListDocuments(root)
+	if err != nil {
+		return nil, fmt.Errorf("listing documents: %w", err)
+	}
+	ws.Documents = documents
+
+	entries, linkWarnings := buildLinkIndex(root, ws.Issues, ws.Documents)
+	ws.Backlinks = entries
+	ws.Warnings = append(ws.Warnings, linkWarnings...)
 
 	return ws, nil
 }
