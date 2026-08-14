@@ -1,7 +1,7 @@
 import {WorkspaceView} from '@/components/workspace-view';
 
 function App() {
-    return <WorkspaceView/>
+    return <WorkspaceView />;
 }
 
-export default App
+export default App;
