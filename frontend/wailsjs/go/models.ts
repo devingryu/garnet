@@ -1,5 +1,19 @@
 export namespace workspace {
 	
+	export class Identity {
+	    name: string;
+	    email: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Identity(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.email = source["email"];
+	    }
+	}
 	export class TimelineEntry {
 	    // Go type: time
 	    at: any;
@@ -57,6 +71,8 @@ export namespace workspace {
 	}
 	export class Issue {
 	    id: string;
+	    projectKey: string;
+	    title: string;
 	    type: string;
 	    status: string;
 	    parent?: string;
@@ -74,6 +90,8 @@ export namespace workspace {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	        this.projectKey = source["projectKey"];
+	        this.title = source["title"];
 	        this.type = source["type"];
 	        this.status = source["status"];
 	        this.parent = source["parent"];
@@ -104,6 +122,20 @@ export namespace workspace {
 		}
 	}
 	
+	export class Member {
+	    name: string;
+	    email: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Member(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.email = source["email"];
+	    }
+	}
 	export class Transition {
 	    from: string;
 	    to: string[];
@@ -185,6 +217,7 @@ export namespace workspace {
 	    name: string;
 	    repos: Repo[];
 	    issueTypes: string[];
+	    members: Member[];
 	    description: string;
 	    workflow?: Workflow;
 	
@@ -198,6 +231,7 @@ export namespace workspace {
 	        this.name = source["name"];
 	        this.repos = this.convertValues(source["repos"], Repo);
 	        this.issueTypes = source["issueTypes"];
+	        this.members = this.convertValues(source["members"], Member);
 	        this.description = source["description"];
 	        this.workflow = this.convertValues(source["workflow"], Workflow);
 	    }

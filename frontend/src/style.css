@@ -59,6 +59,11 @@
     flex-shrink: 0;
 }
 
+.sidebar-project-switcher {
+    flex-shrink: 0;
+    padding: 8px;
+}
+
 .sidebar-nav {
     flex: 1;
     display: flex;
@@ -68,16 +73,33 @@
     overflow: auto;
 }
 
+/* Starts at the very top (not below the drag-region) so the toolbar shares
+   the same horizontal band as the sidebar's traffic-light gutter, instead
+   of sitting in a separate row underneath it. */
 .app-content {
     position: absolute;
-    top: 38px;
+    top: 0;
     right: 0;
     bottom: 0;
     left: 221px;
-    padding: 24px;
-    overflow: auto;
+    display: flex;
+    flex-direction: column;
     z-index: 1;
     text-align: left;
+}
+
+.content-toolbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    height: 38px;
+    padding: 0 8px;
+}
+
+.content-body {
+    flex: 1;
+    overflow: auto;
+    padding: 24px;
 }
 
 @theme inline {

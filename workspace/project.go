@@ -15,12 +15,22 @@ type Repo struct {
 	Path string `yaml:"path" json:"path"`
 }
 
+// Member is a person registered against a project — the closed list that
+// Assignee is restricted to (Reporter is set from Identity at creation, so
+// it doesn't need this). Shape matches Identity's name+email pair; there
+// are no roles/permissions modeled yet.
+type Member struct {
+	Name  string `yaml:"name" json:"name"`
+	Email string `yaml:"email" json:"email"`
+}
+
 // Project is parsed from projects/<KEY>/project.md (+ sibling workflow.md).
 type Project struct {
 	Key         string    `yaml:"key" json:"key"`
 	Name        string    `yaml:"name" json:"name"`
 	Repos       []Repo    `yaml:"repos" json:"repos"`
 	IssueTypes  []string  `yaml:"issue-types" json:"issueTypes"`
+	Members     []Member  `yaml:"members" json:"members"`
 	Description string    `yaml:"-" json:"description"`
 	Workflow    *Workflow `yaml:"-" json:"workflow"`
 }
@@ -68,6 +78,9 @@ func loadProject(dir string) (*Project, error) {
 	if p.IssueTypes == nil {
 		p.IssueTypes = []string{}
 	}
+	if p.Members == nil {
+		p.Members = []Member{}
+	}
 
 	workflow, err := loadWorkflow(dir)
 	if err != nil {
@@ -76,6 +89,41 @@ func loadProject(dir string) (*Project, error) {
 	p.Workflow = workflow
 
 	return &p, nil
+}
+
+// writeProjectFrontmatter marshals p's frontmatter fields (everything except
+// Description/Workflow, which are tagged yaml:"-") and reassembles project.md
+// around the existing Description body via joinFrontmatter, preserving it.
+func writeProjectFrontmatter(dir string, p *Project) error {
+	fm, err := yaml.Marshal(p)
+	if err != nil {
+		return fmt.Errorf("encoding project.md: %w", err)
+	}
+	return writeFile(filepath.Join(dir, "project.md"), joinFrontmatter(fm, p.Description))
+}
+
+// AddProjectMember registers a person against a project, restricting who can
+// be assigned issues in it (see SetIssueAssignee). This is a narrow slice of
+// the project-definition editing that's fully scoped for M5 — just enough
+// to make membership-restricted assignment usable now.
+func AddProjectMember(root, projectKey, name, email string) (*Project, error) {
+	dir := filepath.Join(root, "projects", projectKey)
+	project, err := loadProject(dir)
+	if err != nil {
+		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+	}
+
+	for _, m := range project.Members {
+		if m.Email == email {
+			return nil, fmt.Errorf("%q is already a member of %q", email, projectKey)
+		}
+	}
+	project.Members = append(project.Members, Member{Name: name, Email: email})
+
+	if err := writeProjectFrontmatter(dir, project); err != nil {
+		return nil, err
+	}
+	return loadProject(dir)
 }
 
 // loadWorkflow reads workflow.md from dir. A missing file is not an error —

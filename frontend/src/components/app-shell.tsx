@@ -5,12 +5,23 @@ const drag = {'--wails-draggable': 'drag'} as CSSProperties;
 
 const NAV_ITEMS = ['Overview', 'Activity', 'Settings'];
 
-export function AppShell({children}: {children: ReactNode}) {
+export function AppShell({
+    children,
+    sidebarTop,
+    toolbar,
+}: {
+    children: ReactNode;
+    /** Rendered at the very top of the sidebar, above the nav list — e.g. the workspace/project switcher. */
+    sidebarTop?: ReactNode;
+    /** Rendered in the content-area toolbar, right-aligned — e.g. Reload. */
+    toolbar?: ReactNode;
+}) {
     return (
         <div className="app-shell">
             <div className="drag-region" style={drag}/>
             <aside className="sidebar-glass">
                 <div className="sidebar-glass-draghandle" style={drag}/>
+                {sidebarTop && <div className="sidebar-project-switcher">{sidebarTop}</div>}
                 <nav className="sidebar-nav">
                     {NAV_ITEMS.map((item, i) => (
                         <div
@@ -27,7 +38,13 @@ export function AppShell({children}: {children: ReactNode}) {
                     ))}
                 </nav>
             </aside>
-            <main className="app-content">{children}</main>
+            <main className="app-content">
+                <div className="content-toolbar">
+                    <div className="flex-1" style={drag}/>
+                    {toolbar}
+                </div>
+                <div className="content-body">{children}</div>
+            </main>
         </div>
     );
 }

@@ -45,6 +45,9 @@ func TestOpen_ValidWorkspace(t *testing.T) {
 	if issue.Status != "in-progress" || issue.Type != "story" {
 		t.Errorf("unexpected issue metadata: %+v", issue)
 	}
+	if issue.Title != "Workspace foundation" {
+		t.Errorf("expected title 'Workspace foundation', got %q", issue.Title)
+	}
 	if len(issue.Links) != 1 || issue.Links[0].Target != "GRNT-5" {
 		t.Errorf("unexpected links: %+v", issue.Links)
 	}

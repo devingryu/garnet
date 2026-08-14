@@ -31,3 +31,19 @@ func splitFrontmatter(content []byte) (frontmatter []byte, body string, err erro
 
 	return []byte(fm), strings.TrimSpace(rest), nil
 }
+
+// joinFrontmatter is splitFrontmatter's inverse: it reassembles a file's
+// frontmatter and body so a struct that was parsed with splitFrontmatter can
+// be written back without disturbing the free-form body.
+func joinFrontmatter(frontmatter []byte, body string) []byte {
+	var b strings.Builder
+	b.WriteString("---\n")
+	b.Write(frontmatter)
+	b.WriteString("---\n")
+	if body != "" {
+		b.WriteString("\n")
+		b.WriteString(body)
+		b.WriteString("\n")
+	}
+	return []byte(b.String())
+}
