@@ -61,7 +61,11 @@ export function NewIssueDialog({
                         autoFocus
                     />
                     {hasDeclaredTypes ? (
-                        <Select value={issueType} onValueChange={(v) => setIssueType(v ?? '')}>
+                        <Select
+                            items={project.issueTypes.map((t) => ({value: t, label: t}))}
+                            value={issueType}
+                            onValueChange={(v) => setIssueType(v ?? '')}
+                        >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Type"/>
                             </SelectTrigger>

@@ -130,6 +130,7 @@ export function IssueDetailPanel({
                     <Field label="Status">
                         {statusOptions.length > 0 ? (
                             <Select
+                                items={statusOptions.map((s) => ({value: s.id, label: s.name}))}
                                 value={issue.status}
                                 onValueChange={(v) =>
                                     v && v !== issue.status &&
@@ -158,8 +159,15 @@ export function IssueDetailPanel({
                         {project ? (() => {
                             const known = new Set(project.members.map((m) => m.email));
                             const unknownAssignee = issue.assignee && !known.has(issue.assignee) ? issue.assignee : null;
+                            const items = [
+                                {value: UNASSIGNED, label: 'Unassigned'},
+                                ...(unknownAssignee ? [{value: unknownAssignee, label: unknownAssignee}] : []),
+                                ...project.members.map((m) => ({value: m.email, label: m.name})),
+                                {value: ADD_MEMBER, label: '+ Add member…'},
+                            ];
                             return (
                                 <Select
+                                    items={items}
                                     value={issue.assignee || UNASSIGNED}
                                     onValueChange={(v) => {
                                         if (v == null) return;
@@ -216,7 +224,11 @@ export function IssueDetailPanel({
                             )}
                         </div>
                         <div className="mt-1 flex flex-col gap-1.5">
-                            <Select value={linkType} onValueChange={(v) => setLinkType(v ?? LINK_TYPES[0])}>
+                            <Select
+                                items={LINK_TYPES.map((t) => ({value: t, label: t}))}
+                                value={linkType}
+                                onValueChange={(v) => setLinkType(v ?? LINK_TYPES[0])}
+                            >
                                 <SelectTrigger className="w-full" size="sm">
                                     <SelectValue/>
                                 </SelectTrigger>

@@ -144,7 +144,11 @@ export function WorkspaceView() {
     // (see UI Shell & Navigation) — a dropdown, collapsed to the current
     // project. It only makes sense once a workspace with projects is open.
     const sidebarTop = ws && ws.projects.length > 0 && (
-        <Select value={activeProjectKey ?? undefined} onValueChange={setActiveProjectKey}>
+        <Select
+            items={ws.projects.map((p) => ({value: p.key, label: `${p.key} — ${p.name}`}))}
+            value={activeProjectKey ?? undefined}
+            onValueChange={setActiveProjectKey}
+        >
             <SelectTrigger
                 size="sm"
                 className="w-fit max-w-full justify-start gap-1 rounded-sm border-none bg-transparent p-1 -m-1 text-base font-semibold shadow-none hover:bg-muted data-[size=sm]:h-auto"
