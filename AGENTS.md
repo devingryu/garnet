@@ -51,3 +51,4 @@ These are the ground rules. Each exists because breaking it already caused a bug
 
 - [.agents/skills](.agents/skills) — skills shared across agent tools (Claude Code, etc.).
 - Claude Code picks up the same skills via `.claude/skills` (symlink → `.agents/skills`).
+- [build-and-run](.agents/skills/build-and-run/SKILL.md) — install deps, run dev mode, build the desktop app, and verify before committing.
