@@ -149,7 +149,7 @@ export function WorkspaceView() {
             >
                 <SelectValue placeholder="Project" className="flex-none truncate"/>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent side="bottom" align="start" alignItemWithTrigger={false} sideOffset={4}>
                 {ws.projects.map((p) => (
                     <SelectItem key={p.key} value={p.key}>{p.key} — {p.name}</SelectItem>
                 ))}

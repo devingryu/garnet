@@ -20,6 +20,12 @@ export function TabBar({
                     <div
                         key={item.key}
                         onClick={() => onSelect(item.key)}
+                        onAuxClick={(e) => {
+                            if (e.button === 1) {
+                                e.preventDefault();
+                                onClose(item.key);
+                            }
+                        }}
                         className={cn(
                             'flex shrink-0 cursor-default items-center gap-1.5 border-b-2 border-transparent px-3 py-1.5 text-sm select-none',
                             active
