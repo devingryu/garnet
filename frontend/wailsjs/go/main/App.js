@@ -10,8 +10,20 @@ export function AddProjectMember(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['AddProjectMember'](arg1, arg2, arg3, arg4);
 }
 
+export function AddProjectRepo(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['AddProjectRepo'](arg1, arg2, arg3, arg4);
+}
+
 export function AddTimelineNote(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddTimelineNote'](arg1, arg2, arg3);
+}
+
+export function ArchiveProject(arg1, arg2) {
+  return window['go']['main']['App']['ArchiveProject'](arg1, arg2);
+}
+
+export function CloneProjectRepos(arg1, arg2) {
+  return window['go']['main']['App']['CloneProjectRepos'](arg1, arg2);
 }
 
 export function CreateIssue(arg1, arg2, arg3, arg4) {
@@ -28,6 +40,10 @@ export function OpenWorkspace(arg1) {
 
 export function ReadDocument(arg1, arg2) {
   return window['go']['main']['App']['ReadDocument'](arg1, arg2);
+}
+
+export function RemoveProjectRepo(arg1, arg2, arg3) {
+  return window['go']['main']['App']['RemoveProjectRepo'](arg1, arg2, arg3);
 }
 
 export function SelectWorkspaceFolder() {
@@ -50,8 +66,20 @@ export function SetIssueTitle(arg1, arg2, arg3) {
   return window['go']['main']['App']['SetIssueTitle'](arg1, arg2, arg3);
 }
 
+export function SetProjectIssueTypes(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetProjectIssueTypes'](arg1, arg2, arg3);
+}
+
+export function SetWorkflow(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SetWorkflow'](arg1, arg2, arg3, arg4);
+}
+
 export function TransitionIssueStatus(arg1, arg2, arg3) {
   return window['go']['main']['App']['TransitionIssueStatus'](arg1, arg2, arg3);
+}
+
+export function UnarchiveProject(arg1, arg2) {
+  return window['go']['main']['App']['UnarchiveProject'](arg1, arg2);
 }
 
 export function UpdateIssueBody(arg1, arg2, arg3) {

@@ -26,11 +26,14 @@ type Member struct {
 
 // Project is parsed from projects/<KEY>/project.md (+ sibling workflow.md).
 type Project struct {
-	Key         string    `yaml:"key" json:"key"`
-	Name        string    `yaml:"name" json:"name"`
-	Repos       []Repo    `yaml:"repos" json:"repos"`
-	IssueTypes  []string  `yaml:"issue-types" json:"issueTypes"`
-	Members     []Member  `yaml:"members" json:"members"`
+	Key        string   `yaml:"key" json:"key"`
+	Name       string   `yaml:"name" json:"name"`
+	Repos      []Repo   `yaml:"repos" json:"repos"`
+	IssueTypes []string `yaml:"issue-types" json:"issueTypes"`
+	Members    []Member `yaml:"members" json:"members"`
+	// Archived hides a project from the default project switcher without
+	// deleting anything — see M5's decision to prefer archive over delete.
+	Archived    bool      `yaml:"archived,omitempty" json:"archived"`
 	Description string    `yaml:"-" json:"description"`
 	Workflow    *Workflow `yaml:"-" json:"workflow"`
 }
@@ -119,6 +122,136 @@ func AddProjectMember(root, projectKey, name, email string) (*Project, error) {
 		}
 	}
 	project.Members = append(project.Members, Member{Name: name, Email: email})
+
+	if err := writeProjectFrontmatter(dir, project); err != nil {
+		return nil, err
+	}
+	return loadProject(dir)
+}
+
+// SetProjectIssueTypes replaces a project's declared issue types wholesale —
+// the editor UI always resends the full list, so there's no partial update
+// to reconcile.
+func SetProjectIssueTypes(root, projectKey string, types []string) (*Project, error) {
+	dir := filepath.Join(root, "projects", projectKey)
+	project, err := loadProject(dir)
+	if err != nil {
+		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+	}
+
+	project.IssueTypes = types
+	if project.IssueTypes == nil {
+		project.IssueTypes = []string{}
+	}
+
+	if err := writeProjectFrontmatter(dir, project); err != nil {
+		return nil, err
+	}
+	return loadProject(dir)
+}
+
+// SetWorkflow replaces a project's workflow.md wholesale, after checking
+// every transition only references declared statuses.
+func SetWorkflow(root, projectKey string, statuses []Status, transitions []Transition) (*Project, error) {
+	dir := filepath.Join(root, "projects", projectKey)
+	if _, err := loadProject(dir); err != nil {
+		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+	}
+
+	ids := map[string]bool{}
+	for _, s := range statuses {
+		ids[s.ID] = true
+	}
+	for _, t := range transitions {
+		if !ids[t.From] {
+			return nil, fmt.Errorf("transition references undeclared status %q", t.From)
+		}
+		for _, to := range t.To {
+			if !ids[to] {
+				return nil, fmt.Errorf("transition references undeclared status %q", to)
+			}
+		}
+	}
+
+	wf := Workflow{Statuses: statuses, Transitions: transitions}
+	fm, err := yaml.Marshal(wf)
+	if err != nil {
+		return nil, fmt.Errorf("encoding workflow.md: %w", err)
+	}
+	if err := writeFile(filepath.Join(dir, "workflow.md"), joinFrontmatter(fm, "")); err != nil {
+		return nil, err
+	}
+	return loadProject(dir)
+}
+
+// ArchiveProject and UnarchiveProject flip Project.Archived. Archiving
+// hides a project from the default switcher without deleting anything —
+// see M5's decision to prefer archive over delete.
+func ArchiveProject(root, projectKey string) (*Project, error) {
+	return setProjectArchived(root, projectKey, true)
+}
+
+func UnarchiveProject(root, projectKey string) (*Project, error) {
+	return setProjectArchived(root, projectKey, false)
+}
+
+func setProjectArchived(root, projectKey string, archived bool) (*Project, error) {
+	dir := filepath.Join(root, "projects", projectKey)
+	project, err := loadProject(dir)
+	if err != nil {
+		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+	}
+	project.Archived = archived
+	if err := writeProjectFrontmatter(dir, project); err != nil {
+		return nil, err
+	}
+	return loadProject(dir)
+}
+
+// AddProjectRepo declares a code repository for a project — cloning it is
+// CloneProjectRepos's job (workspace/repos.go), not this one.
+func AddProjectRepo(root, projectKey, url, path string) (*Project, error) {
+	dir := filepath.Join(root, "projects", projectKey)
+	project, err := loadProject(dir)
+	if err != nil {
+		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+	}
+
+	for _, r := range project.Repos {
+		if r.Path == path {
+			return nil, fmt.Errorf("a repo is already declared at path %q", path)
+		}
+	}
+	project.Repos = append(project.Repos, Repo{URL: url, Path: path})
+
+	if err := writeProjectFrontmatter(dir, project); err != nil {
+		return nil, err
+	}
+	return loadProject(dir)
+}
+
+// RemoveProjectRepo un-declares a repo. It does not delete anything already
+// cloned under repos/ — that's left alone.
+func RemoveProjectRepo(root, projectKey, path string) (*Project, error) {
+	dir := filepath.Join(root, "projects", projectKey)
+	project, err := loadProject(dir)
+	if err != nil {
+		return nil, fmt.Errorf("loading project %q: %w", projectKey, err)
+	}
+
+	found := false
+	kept := make([]Repo, 0, len(project.Repos))
+	for _, r := range project.Repos {
+		if r.Path == path {
+			found = true
+			continue
+		}
+		kept = append(kept, r)
+	}
+	if !found {
+		return nil, fmt.Errorf("no repo declared at path %q", path)
+	}
+	project.Repos = kept
 
 	if err := writeProjectFrontmatter(dir, project); err != nil {
 		return nil, err

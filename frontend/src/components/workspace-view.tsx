@@ -11,6 +11,7 @@ import {IssueDetailDialog} from '@/components/issue-detail-dialog';
 import {DocumentTree} from '@/components/document-tree';
 import {DocumentEditorDialog} from '@/components/document-editor-dialog';
 import {NewDocumentDialog} from '@/components/new-document-dialog';
+import {ProjectSettingsDialog} from '@/components/project-settings-dialog';
 import {CreateIssue, GetIdentity, OpenWorkspace, SelectWorkspaceFolder, SetIdentity, TransitionIssueStatus} from '../../wailsjs/go/main/App';
 import type {workspace} from '../../wailsjs/go/models';
 
@@ -28,6 +29,7 @@ export function WorkspaceView() {
     const [newDocumentOpen, setNewDocumentOpen] = useState(false);
     const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
     const [selectedDocPath, setSelectedDocPath] = useState<string | null>(null);
+    const [projectSettingsOpen, setProjectSettingsOpen] = useState(false);
 
     // Only one detail surface is ever open at a time — opening one closes
     // the other, including across issue<->document cross-navigation from
@@ -145,7 +147,11 @@ export function WorkspaceView() {
     const selectedIssue = ws.issues.find((i) => i.id === selectedIssueId) ?? null;
 
     return (
-        <AppShell sidebarTop={sidebarTop} toolbar={toolbar}>
+        <AppShell
+            sidebarTop={sidebarTop}
+            toolbar={toolbar}
+            onSettingsClick={() => activeProject && setProjectSettingsOpen(true)}
+        >
             <div className="flex flex-col gap-4">
                 {ws.warnings.length > 0 && (
                     <div className="rounded-sm border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
@@ -262,6 +268,14 @@ export function WorkspaceView() {
                     onOpenChange={(open) => !open && setSelectedDocPath(null)}
                     onOpenIssue={openIssue}
                     onOpenDocument={openDocument}
+                />
+
+                <ProjectSettingsDialog
+                    path={path ?? ''}
+                    project={activeProject}
+                    open={projectSettingsOpen}
+                    onOpenChange={setProjectSettingsOpen}
+                    onMutate={patchProject}
                 />
 
                 <IdentitySetupDialog

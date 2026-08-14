@@ -439,3 +439,102 @@ func TestIdentity_GitignoreAppendsWithoutDuplicating(t *testing.T) {
 		t.Errorf("expected exactly one .garnet.local.yaml entry, got: %q", content)
 	}
 }
+
+func TestSetProjectIssueTypes(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	project, err := SetProjectIssueTypes(root, "GRNT", []string{"task", "chore"})
+	if err != nil {
+		t.Fatalf("SetProjectIssueTypes() returned error: %v", err)
+	}
+	if len(project.IssueTypes) != 2 || project.IssueTypes[0] != "task" || project.IssueTypes[1] != "chore" {
+		t.Errorf("unexpected issue types: %+v", project.IssueTypes)
+	}
+	// Other fields survive the round-trip.
+	if project.Key != "GRNT" || len(project.Repos) != 1 {
+		t.Errorf("expected other fields preserved, got %+v", project)
+	}
+}
+
+func TestSetWorkflow(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	statuses := []Status{
+		{ID: "todo", Name: "To Do", Category: "open"},
+		{ID: "done", Name: "Done", Category: "closed"},
+	}
+	transitions := []Transition{{From: "todo", To: []string{"done"}}}
+
+	project, err := SetWorkflow(root, "GRNT", statuses, transitions)
+	if err != nil {
+		t.Fatalf("SetWorkflow() returned error: %v", err)
+	}
+	if project.Workflow == nil || len(project.Workflow.Statuses) != 2 || len(project.Workflow.Transitions) != 1 {
+		t.Fatalf("unexpected workflow: %+v", project.Workflow)
+	}
+}
+
+func TestSetWorkflow_RejectsUndeclaredStatus(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	statuses := []Status{{ID: "todo", Name: "To Do", Category: "open"}}
+	transitions := []Transition{{From: "todo", To: []string{"nonexistent"}}}
+
+	if _, err := SetWorkflow(root, "GRNT", statuses, transitions); err == nil {
+		t.Fatal("expected an error for a transition referencing an undeclared status, got nil")
+	}
+}
+
+func TestArchiveProject_RoundTrip(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	project, err := ArchiveProject(root, "GRNT")
+	if err != nil {
+		t.Fatalf("ArchiveProject() returned error: %v", err)
+	}
+	if !project.Archived {
+		t.Error("expected Archived=true")
+	}
+
+	project, err = UnarchiveProject(root, "GRNT")
+	if err != nil {
+		t.Fatalf("UnarchiveProject() returned error: %v", err)
+	}
+	if project.Archived {
+		t.Error("expected Archived=false")
+	}
+}
+
+func TestAddRemoveProjectRepo(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	project, err := AddProjectRepo(root, "GRNT", "https://example.com/other.git", "other")
+	if err != nil {
+		t.Fatalf("AddProjectRepo() returned error: %v", err)
+	}
+	if len(project.Repos) != 2 { // fixture already declares one
+		t.Fatalf("expected 2 repos, got %d: %+v", len(project.Repos), project.Repos)
+	}
+
+	project, err = RemoveProjectRepo(root, "GRNT", "other")
+	if err != nil {
+		t.Fatalf("RemoveProjectRepo() returned error: %v", err)
+	}
+	if len(project.Repos) != 1 {
+		t.Fatalf("expected 1 repo after removal, got %d: %+v", len(project.Repos), project.Repos)
+	}
+}
+
+func TestAddProjectRepo_RejectsDuplicatePath(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := AddProjectRepo(root, "GRNT", "https://example.com/x.git", "garnet"); err == nil {
+		t.Fatal("expected an error for a duplicate repo path, got nil")
+	}
+}
+
+func TestRemoveProjectRepo_NotFound(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := RemoveProjectRepo(root, "GRNT", "does-not-exist"); err == nil {
+		t.Fatal("expected an error for a nonexistent repo path, got nil")
+	}
+}

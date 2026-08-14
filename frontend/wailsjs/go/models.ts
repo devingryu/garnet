@@ -48,6 +48,20 @@ export namespace workspace {
 		    return a;
 		}
 	}
+	export class CloneResult {
+	    cloned: string[];
+	    warnings: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CloneResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.cloned = source["cloned"];
+	        this.warnings = source["warnings"];
+	    }
+	}
 	export class Document {
 	    path: string;
 	
@@ -278,6 +292,7 @@ export namespace workspace {
 	    repos: Repo[];
 	    issueTypes: string[];
 	    members: Member[];
+	    archived: boolean;
 	    description: string;
 	    workflow?: Workflow;
 	
@@ -292,6 +307,7 @@ export namespace workspace {
 	        this.repos = this.convertValues(source["repos"], Repo);
 	        this.issueTypes = source["issueTypes"];
 	        this.members = this.convertValues(source["members"], Member);
+	        this.archived = source["archived"];
 	        this.description = source["description"];
 	        this.workflow = this.convertValues(source["workflow"], Workflow);
 	    }

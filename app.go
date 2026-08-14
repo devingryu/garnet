@@ -103,3 +103,40 @@ func (a *App) ReadDocument(path, relPath string) (string, error) {
 func (a *App) WriteDocument(path, relPath, content string) error {
 	return workspace.WriteDocument(path, relPath, content)
 }
+
+// SetProjectIssueTypes replaces a project's declared issue types.
+func (a *App) SetProjectIssueTypes(path, projectKey string, types []string) (*workspace.Project, error) {
+	return workspace.SetProjectIssueTypes(path, projectKey, types)
+}
+
+// SetWorkflow replaces a project's workflow.md.
+func (a *App) SetWorkflow(path, projectKey string, statuses []workspace.Status, transitions []workspace.Transition) (*workspace.Project, error) {
+	return workspace.SetWorkflow(path, projectKey, statuses, transitions)
+}
+
+// ArchiveProject hides a project from the default switcher without
+// deleting anything.
+func (a *App) ArchiveProject(path, projectKey string) (*workspace.Project, error) {
+	return workspace.ArchiveProject(path, projectKey)
+}
+
+// UnarchiveProject reverses ArchiveProject.
+func (a *App) UnarchiveProject(path, projectKey string) (*workspace.Project, error) {
+	return workspace.UnarchiveProject(path, projectKey)
+}
+
+// AddProjectRepo declares a code repository for a project.
+func (a *App) AddProjectRepo(path, projectKey, url, repoPath string) (*workspace.Project, error) {
+	return workspace.AddProjectRepo(path, projectKey, url, repoPath)
+}
+
+// RemoveProjectRepo un-declares a repo (does not delete anything already cloned).
+func (a *App) RemoveProjectRepo(path, projectKey, repoPath string) (*workspace.Project, error) {
+	return workspace.RemoveProjectRepo(path, projectKey, repoPath)
+}
+
+// CloneProjectRepos clones every repo a project declares into repos/,
+// skipping ones already present.
+func (a *App) CloneProjectRepos(path, projectKey string) (*workspace.CloneResult, error) {
+	return workspace.CloneProjectRepos(path, projectKey)
+}

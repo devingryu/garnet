@@ -9,12 +9,15 @@ export function AppShell({
     children,
     sidebarTop,
     toolbar,
+    onSettingsClick,
 }: {
     children: ReactNode;
     /** Rendered at the very top of the sidebar, above the nav list — e.g. the workspace/project switcher. */
     sidebarTop?: ReactNode;
     /** Rendered in the content-area toolbar, right-aligned — e.g. Reload. */
     toolbar?: ReactNode;
+    /** Called when the "Settings" nav item is clicked. Overview/Activity stay inert placeholders. */
+    onSettingsClick?: () => void;
 }) {
     return (
         <div className="app-shell">
@@ -26,11 +29,13 @@ export function AppShell({
                     {NAV_ITEMS.map((item, i) => (
                         <div
                             key={item}
+                            onClick={item === 'Settings' ? onSettingsClick : undefined}
                             className={cn(
-                                'rounded-sm px-2 py-1.5 text-sm select-none cursor-default',
+                                'rounded-sm px-2 py-1.5 text-sm select-none',
                                 i === 0
                                     ? 'bg-accent text-accent-foreground font-medium'
-                                    : 'text-foreground/80 hover:bg-muted'
+                                    : 'text-foreground/80 hover:bg-muted',
+                                item === 'Settings' ? 'cursor-pointer' : 'cursor-default'
                             )}
                         >
                             {item}
