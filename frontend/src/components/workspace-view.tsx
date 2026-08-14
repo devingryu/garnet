@@ -16,6 +16,7 @@ import {DocumentTree} from '@/components/document-tree';
 import {DocumentEditorPanel} from '@/components/document-editor-panel';
 import {NewDocumentDialog} from '@/components/new-document-dialog';
 import {ProjectSettingsDialog} from '@/components/project-settings-dialog';
+import type {SettingsSection} from '@/components/project-settings-dialog';
 import {CreateIssue, GetIdentity, OpenWorkspace, SelectWorkspaceFolder, SetIdentity, TransitionIssueStatus} from '../../wailsjs/go/main/App';
 import type {workspace} from '../../wailsjs/go/models';
 
@@ -31,6 +32,7 @@ export function WorkspaceView() {
     const [newIssueOpen, setNewIssueOpen] = useState(false);
     const [newDocumentOpen, setNewDocumentOpen] = useState(false);
     const [projectSettingsOpen, setProjectSettingsOpen] = useState(false);
+    const [projectSettingsSection, setProjectSettingsSection] = useState<SettingsSection>('issueTypes');
 
     // Open tabs, VSCode-style: they persist across project switches, and
     // clicking something already open focuses it instead of duplicating it.
@@ -149,7 +151,7 @@ export function WorkspaceView() {
             >
                 <SelectValue placeholder="Project" className="flex-none truncate"/>
             </SelectTrigger>
-            <SelectContent side="bottom" align="start" alignItemWithTrigger={false} sideOffset={4}>
+            <SelectContent>
                 {ws.projects.map((p) => (
                     <SelectItem key={p.key} value={p.key}>{p.key} — {p.name}</SelectItem>
                 ))}
@@ -233,7 +235,11 @@ export function WorkspaceView() {
             sidebarBody={sidebarBody}
             toolbar={toolbar}
             tabBar={tabBar}
-            onSettingsClick={() => activeProject && setProjectSettingsOpen(true)}
+            onSettingsClick={() => {
+                if (!activeProject) return;
+                setProjectSettingsSection('issueTypes');
+                setProjectSettingsOpen(true);
+            }}
         >
             <div className="flex flex-col gap-4">
                 {ws.warnings.length > 0 && (
@@ -296,7 +302,7 @@ export function WorkspaceView() {
                                     }
                                 />
                             ) : (
-                                <IssueList issues={projectIssues} onSelect={openIssue}/>
+                                <IssueList issues={projectIssues} project={project} onSelect={openIssue}/>
                             )}
                         </>
                     );
@@ -312,9 +318,13 @@ export function WorkspaceView() {
                             project={ws.projects.find((p) => p.key === issue.projectKey)}
                             ws={ws}
                             onMutate={patchIssue}
-                            onProjectMutate={patchProject}
                             onOpenDocument={openDocument}
                             onOpenIssue={openIssue}
+                            onRequestAddMember={() => {
+                                setActiveProjectKey(issue.projectKey);
+                                setProjectSettingsSection('members');
+                                setProjectSettingsOpen(true);
+                            }}
                         />
                     );
                 })()}
@@ -358,6 +368,7 @@ export function WorkspaceView() {
                     open={projectSettingsOpen}
                     onOpenChange={setProjectSettingsOpen}
                     onMutate={patchProject}
+                    initialSection={projectSettingsSection}
                 />
 
                 <IdentitySetupDialog

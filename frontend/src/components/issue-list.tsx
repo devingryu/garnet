@@ -1,10 +1,13 @@
+import {memberName} from '@/lib/members';
 import type {workspace} from '../../wailsjs/go/models';
 
 export function IssueList({
     issues,
+    project,
     onSelect,
 }: {
     issues: workspace.Issue[];
+    project: workspace.Project;
     onSelect: (id: string) => void;
 }) {
     if (issues.length === 0) {
@@ -22,7 +25,7 @@ export function IssueList({
                     <span className="font-medium">{issue.title || issue.id}</span>
                     <span className="ml-2 text-muted-foreground">
                         {issue.id} · {issue.type} · {issue.status || '—'}
-                        {issue.assignee && <> · {issue.assignee}</>}
+                        {issue.assignee && <> · {memberName(project, issue.assignee)}</>}
                         {issue.parent && <> · child of {issue.parent}</>}
                     </span>
                 </button>

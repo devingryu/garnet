@@ -3,12 +3,12 @@ import type {ReactNode} from 'react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {allowedNextStatuses} from '@/lib/workflow';
 import {backlinksFor} from '@/lib/documents';
+import {memberName} from '@/lib/members';
 import {
     AddIssueLink,
-    AddProjectMember,
     AddTimelineNote,
     SetIssueAssignee,
     SetIssueParent,
@@ -20,6 +20,7 @@ import type {workspace} from '../../wailsjs/go/models';
 
 const LINK_TYPES = ['blocks', 'relates-to', 'duplicates'];
 const UNASSIGNED = '__unassigned__';
+const ADD_MEMBER = '__add_member__';
 
 function formatTimestamp(at: unknown): string {
     const d = new Date(at as string);
@@ -41,26 +42,24 @@ export function IssueDetailPanel({
     project,
     ws,
     onMutate,
-    onProjectMutate,
     onOpenDocument,
     onOpenIssue,
+    onRequestAddMember,
 }: {
     path: string;
     issue: workspace.Issue;
     project: workspace.Project | undefined;
     ws: workspace.Workspace;
     onMutate: (updated: workspace.Issue) => void;
-    onProjectMutate: (updated: workspace.Project) => void;
     onOpenDocument: (path: string) => void;
     onOpenIssue: (id: string) => void;
+    onRequestAddMember: () => void;
 }) {
     const [title, setTitle] = useState('');
     const [body, setBody] = useState('');
     const [parent, setParent] = useState('');
     const [linkType, setLinkType] = useState(LINK_TYPES[0]);
     const [linkTarget, setLinkTarget] = useState('');
-    const [newMemberName, setNewMemberName] = useState('');
-    const [newMemberEmail, setNewMemberEmail] = useState('');
     const [noteBody, setNoteBody] = useState('');
     const [error, setError] = useState<string | null>(null);
 
@@ -156,63 +155,41 @@ export function IssueDetailPanel({
                     </Field>
 
                     <Field label="Assignee">
-                        {project && project.members.length > 0 && (
-                            <Select
-                                value={issue.assignee || UNASSIGNED}
-                                onValueChange={(v) => {
-                                    if (v == null) return;
-                                    const email = v === UNASSIGNED ? '' : v;
-                                    if (email === (issue.assignee ?? '')) return;
-                                    run(async () => onMutate(await SetIssueAssignee(path, issue.id, email)));
-                                }}
-                            >
-                                <SelectTrigger size="sm" className="w-full">
-                                    <SelectValue/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-                                    {project.members.map((m) => (
-                                        <SelectItem key={m.email} value={m.email}>{m.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                        {(!project || project.members.length === 0) && (
-                            <p className="text-sm text-muted-foreground">No members registered yet.</p>
-                        )}
-                        {project && (
-                            <div className="mt-1.5 flex flex-col gap-1.5">
-                                <Input
-                                    placeholder="Name"
-                                    value={newMemberName}
-                                    onChange={(e) => setNewMemberName(e.target.value)}
-                                />
-                                <Input
-                                    placeholder="Email"
-                                    value={newMemberEmail}
-                                    onChange={(e) => setNewMemberEmail(e.target.value)}
-                                />
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={!newMemberName.trim() || !newMemberEmail.trim()}
-                                    onClick={() =>
-                                        run(async () => {
-                                            const updated = await AddProjectMember(
-                                                path,
-                                                project.key,
-                                                newMemberName.trim(),
-                                                newMemberEmail.trim()
-                                            );
-                                            onProjectMutate(updated);
-                                            setNewMemberName('');
-                                            setNewMemberEmail('');
-                                        })
-                                    }
+                        {project ? (() => {
+                            const known = new Set(project.members.map((m) => m.email));
+                            const unknownAssignee = issue.assignee && !known.has(issue.assignee) ? issue.assignee : null;
+                            return (
+                                <Select
+                                    value={issue.assignee || UNASSIGNED}
+                                    onValueChange={(v) => {
+                                        if (v == null) return;
+                                        if (v === ADD_MEMBER) {
+                                            onRequestAddMember();
+                                            return;
+                                        }
+                                        const email = v === UNASSIGNED ? '' : v;
+                                        if (email === (issue.assignee ?? '')) return;
+                                        run(async () => onMutate(await SetIssueAssignee(path, issue.id, email)));
+                                    }}
                                 >
-                                    Add member
-                                </Button>
-                            </div>
+                                    <SelectTrigger size="sm" className="w-full">
+                                        <SelectValue/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                                        {unknownAssignee && (
+                                            <SelectItem value={unknownAssignee}>{unknownAssignee}</SelectItem>
+                                        )}
+                                        {project.members.map((m) => (
+                                            <SelectItem key={m.email} value={m.email}>{m.name}</SelectItem>
+                                        ))}
+                                        <SelectSeparator/>
+                                        <SelectItem value={ADD_MEMBER}>+ Add member…</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            );
+                        })() : (
+                            <span className="text-sm">{memberName(project, issue.assignee) || 'Unassigned'}</span>
                         )}
                     </Field>
 
@@ -324,7 +301,7 @@ export function IssueDetailPanel({
                                     : entry.body}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                {entry.by} · {formatTimestamp(entry.at)}
+                                {memberName(project, entry.by)} · {formatTimestamp(entry.at)}
                             </p>
                         </div>
                     ))}

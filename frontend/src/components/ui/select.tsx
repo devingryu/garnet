@@ -59,9 +59,13 @@ function SelectContent({
   children,
   side = "bottom",
   sideOffset = 4,
-  align = "center",
+  align = "start",
   alignOffset = 0,
-  alignItemWithTrigger = true,
+  // Anchored below-left of the trigger, not aligned so the selected item
+  // overlaps it — the latter is native-<select>-like but covers the
+  // trigger itself once it's not a boxed control (see the sidebar project
+  // switcher).
+  alignItemWithTrigger = false,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<
