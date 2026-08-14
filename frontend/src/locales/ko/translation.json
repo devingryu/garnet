@@ -1,0 +1,151 @@
+{
+  "app": {
+    "reload": "다시 불러오기",
+    "settings": "설정",
+    "language": "언어"
+  },
+  "common": {
+    "close": "닫기",
+    "add": "추가",
+    "remove": "{{name}} 제거",
+    "empty": "—"
+  },
+  "workspace": {
+    "chooseFolder": "Garnet 워크스페이스 열기",
+    "openPrompt": "projects/ 또는 issues/ 디렉터리가 있는 폴더를 열어 시작하세요.",
+    "open": "워크스페이스 열기",
+    "opening": "여는 중…",
+    "projectPlaceholder": "프로젝트",
+    "nothingSelected": "사이드바에서 이슈나 문서를 선택하세요.",
+    "loadFailures_other": "{{count}}개 항목을 불러오지 못했습니다"
+  },
+  "sidebar": {
+    "issues": "이슈",
+    "documents": "문서",
+    "newDocument": "새 문서",
+    "noDocuments": "아직 문서가 없습니다."
+  },
+  "tabs": {
+    "close": "{{label}} 닫기"
+  },
+  "issues": {
+    "board": "보드",
+    "list": "목록",
+    "new": "새 이슈",
+    "notFound": "이슈를 찾을 수 없습니다.",
+    "empty": "아직 이슈가 없습니다.",
+    "childOf": "{{parent}}의 하위",
+    "noWorkflow": "{{project}}에 workflow.md가 없어 보드로 표시할 상태 컬럼이 없습니다."
+  },
+  "issue": {
+    "titlePlaceholder": "제목",
+    "descriptionPlaceholder": "설명을 입력하세요…",
+    "status": "상태",
+    "type": "유형",
+    "assignee": "담당자",
+    "unassigned": "담당자 없음",
+    "parent": "상위 이슈",
+    "parentPlaceholder": "예: GRNT-1",
+    "links": "연결",
+    "noLinks": "아직 없습니다.",
+    "linkTargetPlaceholder": "대상 이슈 ID",
+    "addLink": "연결 추가",
+    "linkType": {
+      "blocks": "차단함",
+      "relates-to": "관련됨",
+      "duplicates": "중복됨"
+    },
+    "timeline": {
+      "heading": "타임라인",
+      "notePlaceholder": "노트를 입력하세요…",
+      "addNote": "노트 추가",
+      "statusChange": "{{from}}에서 {{to}}(으)로 이동",
+      "empty": "아직 활동이 없습니다."
+    }
+  },
+  "member": {
+    "name": "이름",
+    "email": "이메일",
+    "none": "등록된 구성원이 없습니다.",
+    "addPrompt": "+ 구성원 추가…"
+  },
+  "backlinks": {
+    "heading": "여기를 참조하는 항목",
+    "empty": "아직 없습니다.",
+    "issue": "이슈 {{id}}"
+  },
+  "document": {
+    "loading": "불러오는 중…"
+  },
+  "newIssue": {
+    "heading": "{{project}}에 새 이슈 만들기",
+    "titlePlaceholder": "제목",
+    "typePlaceholder": "유형",
+    "customTypePlaceholder": "유형 (이 프로젝트는 유형을 선언하지 않아 아무 값이나 쓸 수 있습니다)",
+    "create": "만들기",
+    "creating": "만드는 중…"
+  },
+  "newDocument": {
+    "heading": "새 문서",
+    "pathPlaceholder": "예: decisions/0008-my-decision.md",
+    "create": "만들기",
+    "creating": "만드는 중…"
+  },
+  "identity": {
+    "heading": "누구신가요?",
+    "description": "<code>{{file}}</code>에 기기별로 저장되며 git에서 제외됩니다. 만드는 이슈의 보고자로 사용됩니다.",
+    "save": "저장",
+    "saving": "저장 중…"
+  },
+  "settings": {
+    "heading": "{{project}} 설정",
+    "sections": {
+      "issueTypes": "이슈 유형",
+      "workflow": "워크플로",
+      "repos": "저장소",
+      "members": "구성원",
+      "archive": "보관"
+    },
+    "noIssueTypes": "선언된 유형이 없습니다 — 아무 값이나 허용됩니다.",
+    "newIssueType": "새 유형",
+    "noWorkflow": "아직 선언된 워크플로가 없습니다.",
+    "statusId": "id",
+    "statusName": "이름",
+    "statusCategory": "분류",
+    "statusTargets": "이동 가능한 상태 (쉼표로 구분)",
+    "removeStatus": "상태 제거",
+    "addStatus": "상태 추가",
+    "saveWorkflow": "워크플로 저장",
+    "noRepos": "아직 선언된 저장소가 없습니다.",
+    "repoUrl": "Git URL",
+    "repoPath": "repos/<경로>",
+    "clone": "선언된 저장소 클론",
+    "cloning": "클론 중…",
+    "cloned": "클론 완료: {{paths}}",
+    "archiveProject": "프로젝트 보관",
+    "unarchiveProject": "보관 해제"
+  },
+  "errors": {
+    "unknown": "문제가 발생했습니다: {{detail}}",
+    "not_a_workspace": "Garnet 워크스페이스가 아닙니다 — projects/ 또는 issues/ 디렉터리가 필요합니다.",
+    "issue_not_found": "해당 이슈가 더 이상 존재하지 않습니다.",
+    "project_load_failed": "{{project}} 프로젝트를 읽을 수 없습니다.",
+    "title_required": "제목을 입력해야 합니다.",
+    "note_body_required": "노트 내용을 입력해야 합니다.",
+    "identity_required": "이 워크스페이스에서 사용할 이름과 이메일을 먼저 설정하세요.",
+    "issue_type_not_declared": "{{project}} 프로젝트에는 \"{{type}}\" 유형이 선언되어 있지 않습니다.",
+    "status_not_declared": "\"{{status}}\"은(는) 이 프로젝트 워크플로의 상태가 아닙니다.",
+    "invalid_transition": "이 이슈는 \"{{from}}\"에서 \"{{to}}\"(으)로 이동할 수 없습니다.",
+    "not_a_project_member": "{{email}}은(는) {{project}} 프로젝트의 구성원이 아닙니다.",
+    "member_already_exists": "{{email}}은(는) 이미 {{project}}의 구성원입니다.",
+    "parent_not_found": "{{parent}} 이슈가 없습니다.",
+    "link_target_not_found": "{{target}} 이슈가 없습니다.",
+    "transition_unknown_status": "전이가 선언되지 않은 상태 \"{{status}}\"을(를) 가리키고 있습니다.",
+    "repo_path_taken": "{{path}} 경로에 이미 저장소가 선언되어 있습니다.",
+    "repo_not_declared": "{{path}} 경로에 선언된 저장소가 없습니다.",
+    "document_path_invalid": "{{path}}은(는) 올바른 문서 경로가 아닙니다.",
+    "document_not_markdown": ".md 문서만 지원합니다 — {{path}}은(는) 해당하지 않습니다.",
+    "document_path_reserved": "{{path}}은(는) 예약된 경로라 문서를 둘 수 없습니다.",
+    "document_unreadable": "{{path}}을(를) 읽을 수 없습니다."
+  }
+}

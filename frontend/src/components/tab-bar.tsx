@@ -1,4 +1,5 @@
 import {X} from 'lucide-react';
+import {useTranslation} from 'react-i18next';
 import {cn} from '@/lib/utils';
 
 export function TabBar({
@@ -12,6 +13,8 @@ export function TabBar({
     onSelect: (key: string) => void;
     onClose: (key: string) => void;
 }) {
+    const {t} = useTranslation();
+
     return (
         <div className="tab-bar">
             {items.map((item) => {
@@ -39,10 +42,10 @@ export function TabBar({
                                 e.stopPropagation();
                                 onClose(item.key);
                             }}
-                            aria-label={`Close ${item.label}`}
+                            aria-label={t('tabs.close', {label: item.label})}
                             className="rounded-sm p-0.5 hover:bg-muted"
                         >
-                            <X className="size-3"/>
+                            <X className="size-3" />
                         </button>
                     </div>
                 );

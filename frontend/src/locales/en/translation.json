@@ -1,0 +1,152 @@
+{
+  "app": {
+    "reload": "Reload",
+    "settings": "Settings",
+    "language": "Language"
+  },
+  "common": {
+    "close": "Close",
+    "add": "Add",
+    "remove": "Remove {{name}}",
+    "empty": "—"
+  },
+  "workspace": {
+    "chooseFolder": "Open Garnet Workspace",
+    "openPrompt": "Open a directory containing projects/ or issues/ to get started.",
+    "open": "Open Workspace",
+    "opening": "Opening…",
+    "projectPlaceholder": "Project",
+    "nothingSelected": "Select Issues or a document from the sidebar to get started.",
+    "loadFailures_one": "{{count}} item failed to load",
+    "loadFailures_other": "{{count}} items failed to load"
+  },
+  "sidebar": {
+    "issues": "Issues",
+    "documents": "Documents",
+    "newDocument": "New document",
+    "noDocuments": "No documents yet."
+  },
+  "tabs": {
+    "close": "Close {{label}}"
+  },
+  "issues": {
+    "board": "Board",
+    "list": "List",
+    "new": "New Issue",
+    "notFound": "Issue not found.",
+    "empty": "No issues yet.",
+    "childOf": "child of {{parent}}",
+    "noWorkflow": "{{project}} has no workflow.md, so there are no status columns to board by."
+  },
+  "issue": {
+    "titlePlaceholder": "Title",
+    "descriptionPlaceholder": "Write a description…",
+    "status": "Status",
+    "type": "Type",
+    "assignee": "Assignee",
+    "unassigned": "Unassigned",
+    "parent": "Parent",
+    "parentPlaceholder": "e.g. GRNT-1",
+    "links": "Links",
+    "noLinks": "None yet.",
+    "linkTargetPlaceholder": "Target issue ID",
+    "addLink": "Add link",
+    "linkType": {
+      "blocks": "blocks",
+      "relates-to": "relates to",
+      "duplicates": "duplicates"
+    },
+    "timeline": {
+      "heading": "Timeline",
+      "notePlaceholder": "Add a note…",
+      "addNote": "Add note",
+      "statusChange": "Moved from {{from}} to {{to}}",
+      "empty": "No activity yet."
+    }
+  },
+  "member": {
+    "name": "Name",
+    "email": "Email",
+    "none": "No members registered yet.",
+    "addPrompt": "+ Add member…"
+  },
+  "backlinks": {
+    "heading": "Referenced by",
+    "empty": "Nothing yet.",
+    "issue": "Issue {{id}}"
+  },
+  "document": {
+    "loading": "Loading…"
+  },
+  "newIssue": {
+    "heading": "New issue in {{project}}",
+    "titlePlaceholder": "Title",
+    "typePlaceholder": "Type",
+    "customTypePlaceholder": "Type (this project declares none, so any label works)",
+    "create": "Create",
+    "creating": "Creating…"
+  },
+  "newDocument": {
+    "heading": "New document",
+    "pathPlaceholder": "e.g. decisions/0008-my-decision.md",
+    "create": "Create",
+    "creating": "Creating…"
+  },
+  "identity": {
+    "heading": "Who are you?",
+    "description": "Stored per-machine in <code>{{file}}</code>, gitignored. Used as the reporter on issues you create.",
+    "save": "Save",
+    "saving": "Saving…"
+  },
+  "settings": {
+    "heading": "{{project}} settings",
+    "sections": {
+      "issueTypes": "Issue types",
+      "workflow": "Workflow",
+      "repos": "Repos",
+      "members": "Members",
+      "archive": "Archive"
+    },
+    "noIssueTypes": "None declared — any label is accepted.",
+    "newIssueType": "New type",
+    "noWorkflow": "No workflow declared yet.",
+    "statusId": "id",
+    "statusName": "name",
+    "statusCategory": "category",
+    "statusTargets": "can move to (comma-separated)",
+    "removeStatus": "Remove status",
+    "addStatus": "Add status",
+    "saveWorkflow": "Save workflow",
+    "noRepos": "No repos declared yet.",
+    "repoUrl": "Git URL",
+    "repoPath": "repos/<path>",
+    "clone": "Clone declared repos",
+    "cloning": "Cloning…",
+    "cloned": "Cloned: {{paths}}",
+    "archiveProject": "Archive project",
+    "unarchiveProject": "Unarchive project"
+  },
+  "errors": {
+    "unknown": "Something went wrong: {{detail}}",
+    "not_a_workspace": "That folder isn't a Garnet workspace — it needs a projects/ or issues/ directory.",
+    "issue_not_found": "That issue no longer exists.",
+    "project_load_failed": "Couldn't read project {{project}}.",
+    "title_required": "A title is required.",
+    "note_body_required": "A note can't be empty.",
+    "identity_required": "Set up your name and email for this workspace first.",
+    "issue_type_not_declared": "Project {{project}} doesn't declare the issue type \"{{type}}\".",
+    "status_not_declared": "\"{{status}}\" isn't a status in this project's workflow.",
+    "invalid_transition": "This issue can't move from \"{{from}}\" to \"{{to}}\".",
+    "not_a_project_member": "{{email}} isn't a member of project {{project}}.",
+    "member_already_exists": "{{email}} is already a member of {{project}}.",
+    "parent_not_found": "There's no issue called {{parent}}.",
+    "link_target_not_found": "There's no issue called {{target}}.",
+    "transition_unknown_status": "A transition points at \"{{status}}\", which isn't declared as a status.",
+    "repo_path_taken": "A repo is already declared at {{path}}.",
+    "repo_not_declared": "No repo is declared at {{path}}.",
+    "document_path_invalid": "{{path}} isn't a valid document path.",
+    "document_not_markdown": "Only .md documents are supported — {{path}} isn't one.",
+    "document_path_reserved": "{{path}} is reserved and can't hold documents.",
+    "document_unreadable": "Couldn't read {{path}}."
+  }
+}

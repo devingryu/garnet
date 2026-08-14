@@ -46,8 +46,8 @@ export function RemoveProjectRepo(arg1, arg2, arg3) {
   return window['go']['main']['App']['RemoveProjectRepo'](arg1, arg2, arg3);
 }
 
-export function SelectWorkspaceFolder() {
-  return window['go']['main']['App']['SelectWorkspaceFolder']();
+export function SelectWorkspaceFolder(arg1) {
+  return window['go']['main']['App']['SelectWorkspaceFolder'](arg1);
 }
 
 export function SetIdentity(arg1, arg2, arg3) {

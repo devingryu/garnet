@@ -1,17 +1,20 @@
+import {useTranslation} from 'react-i18next';
 import {memberName} from '@/lib/members';
-import type {workspace} from '../../wailsjs/go/models';
+import type {Issue, Project} from '@/lib/model';
 
 export function IssueList({
     issues,
     project,
     onSelect,
 }: {
-    issues: workspace.Issue[];
-    project: workspace.Project;
+    issues: Issue[];
+    project: Project;
     onSelect: (id: string) => void;
 }) {
+    const {t} = useTranslation();
+
     if (issues.length === 0) {
-        return <p className="text-sm text-muted-foreground">No issues yet.</p>;
+        return <p className="text-sm text-muted-foreground">{t('issues.empty')}</p>;
     }
 
     return (
@@ -22,11 +25,13 @@ export function IssueList({
                     onClick={() => onSelect(issue.id)}
                     className="rounded-sm border border-border px-3 py-2 text-left text-sm hover:bg-muted"
                 >
+                    {/* Title, type and status are workspace data, not chrome —
+                        they are shown as authored (AGENTS.md rule 11). */}
                     <span className="font-medium">{issue.title || issue.id}</span>
                     <span className="ml-2 text-muted-foreground">
-                        {issue.id} · {issue.type} · {issue.status || '—'}
+                        {issue.id} · {issue.type} · {issue.status || t('common.empty')}
                         {issue.assignee && <> · {memberName(project, issue.assignee)}</>}
-                        {issue.parent && <> · child of {issue.parent}</>}
+                        {issue.parent && <> · {t('issues.childOf', {parent: issue.parent})}</>}
                     </span>
                 </button>
             ))}

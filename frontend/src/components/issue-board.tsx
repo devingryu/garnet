@@ -1,11 +1,12 @@
 import {useState} from 'react';
 import type {MouseEvent as ReactMouseEvent} from 'react';
+import {useTranslation} from 'react-i18next';
 import {cn} from '@/lib/utils';
 import {allowedNextStatuses} from '@/lib/workflow';
-import type {workspace} from '../../wailsjs/go/models';
+import type {Issue, Project} from '@/lib/model';
 
 interface DragState {
-    issue: workspace.Issue;
+    issue: Issue;
     x: number;
     y: number;
     offsetX: number;
@@ -20,11 +21,12 @@ export function IssueBoard({
     onSelect,
     onStatusChange,
 }: {
-    project: workspace.Project;
-    issues: workspace.Issue[];
+    project: Project;
+    issues: Issue[];
     onSelect: (id: string) => void;
     onStatusChange: (id: string, status: string) => void;
 }) {
+    const {t} = useTranslation();
     const statuses = project.workflow?.statuses ?? [];
     const [drag, setDrag] = useState<DragState | null>(null);
     const [hoverStatus, setHoverStatus] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export function IssueBoard({
     if (statuses.length === 0) {
         return (
             <p className="text-sm text-muted-foreground">
-                {project.key} has no workflow.md, so there are no status columns to board by.
+                {t('issues.noWorkflow', {project: project.key})}
             </p>
         );
     }
@@ -40,9 +42,11 @@ export function IssueBoard({
     // Statuses this drag could legally land on — used to highlight valid
     // drop columns as the card moves over them, Jira-style, rather than
     // only finding out a move was invalid after dropping.
-    const allowedTargets = drag ? allowedNextStatuses(project.workflow, drag.issue.status).map((s) => s.id) : [];
+    const allowedTargets = drag
+        ? allowedNextStatuses(project.workflow, drag.issue.status).map((s) => s.id)
+        : [];
 
-    function startDrag(e: ReactMouseEvent, issue: workspace.Issue) {
+    function startDrag(e: ReactMouseEvent, issue: Issue) {
         if (e.button !== 0) return;
         e.preventDefault();
 
@@ -66,7 +70,8 @@ export function IssueBoard({
         function onMove(ev: MouseEvent) {
             setDrag((prev) => {
                 if (!prev) return prev;
-                const moved = prev.moved || Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 4;
+                const moved =
+                    prev.moved || Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 4;
                 return {...prev, x: ev.clientX, y: ev.clientY, moved};
             });
             setHoverStatus(statusUnderPointer(ev) ?? null);
@@ -108,8 +113,11 @@ export function IssueBoard({
                             isHovered && isValidTarget && 'bg-accent/60'
                         )}
                     >
+                        {/* Status names come from the project's workflow.md —
+                            user content, shown as authored (rule 11). */}
                         <h3 className="mb-2 text-sm font-medium">
-                            {status.name} <span className="text-muted-foreground">({column.length})</span>
+                            {status.name}{' '}
+                            <span className="text-muted-foreground">({column.length})</span>
                         </h3>
                         <div className="flex min-h-8 flex-col gap-1.5">
                             {column.map((issue) => (
@@ -122,7 +130,9 @@ export function IssueBoard({
                                     )}
                                 >
                                     <p className="font-medium">{issue.title || issue.id}</p>
-                                    <p className="mt-0.5 text-xs text-muted-foreground">{issue.id} · {issue.type}</p>
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                        {issue.id} · {issue.type}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -133,10 +143,16 @@ export function IssueBoard({
             {drag && drag.moved && (
                 <div
                     className="pointer-events-none fixed z-50 rounded-sm border border-border bg-card p-2 text-sm opacity-80"
-                    style={{left: drag.x - drag.offsetX, top: drag.y - drag.offsetY, width: drag.width}}
+                    style={{
+                        left: drag.x - drag.offsetX,
+                        top: drag.y - drag.offsetY,
+                        width: drag.width,
+                    }}
                 >
                     <p className="font-medium">{drag.issue.title || drag.issue.id}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{drag.issue.id} · {drag.issue.type}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                        {drag.issue.id} · {drag.issue.type}
+                    </p>
                 </div>
             )}
         </div>

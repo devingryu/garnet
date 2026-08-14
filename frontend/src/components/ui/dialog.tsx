@@ -3,6 +3,8 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
+import { useTranslation } from "react-i18next"
+
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
@@ -47,6 +49,11 @@ function DialogContent({
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
 }) {
+  // Vendored shadcn code is otherwise left alone, but this label is read out
+  // to screen readers, so it goes through the catalog like every other
+  // user-facing string (AGENTS.md rules 10 and 14).
+  const { t } = useTranslation()
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -72,7 +79,7 @@ function DialogContent({
           >
             <XIcon
             />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t("common.close")}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>

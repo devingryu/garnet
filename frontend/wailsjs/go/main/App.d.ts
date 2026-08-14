@@ -24,7 +24,7 @@ export function ReadDocument(arg1:string,arg2:string):Promise<string>;
 
 export function RemoveProjectRepo(arg1:string,arg2:string,arg3:string):Promise<workspace.Project>;
 
-export function SelectWorkspaceFolder():Promise<string>;
+export function SelectWorkspaceFolder(arg1:string):Promise<string>;
 
 export function SetIdentity(arg1:string,arg2:string,arg3:string):Promise<void>;
 

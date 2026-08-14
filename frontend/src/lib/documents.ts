@@ -1,4 +1,4 @@
-import type {workspace} from '../../wailsjs/go/models';
+import type {Backlink, Document, Workspace} from '@/lib/model';
 
 export interface DocTreeNode {
     name: string;
@@ -9,7 +9,7 @@ export interface DocTreeNode {
 
 /** Builds a nested tree from the flat, forward-slashed document path list —
  *  purely client-side, no Go changes needed for this. */
-export function buildDocumentTree(docs: workspace.Document[]): DocTreeNode[] {
+export function buildDocumentTree(docs: Document[]): DocTreeNode[] {
     const root: DocTreeNode[] = [];
     for (const doc of docs) {
         const parts = doc.path.split('/');
@@ -39,9 +39,11 @@ function sortTree(nodes: DocTreeNode[]) {
 }
 
 export function backlinksFor(
-    ws: workspace.Workspace,
+    ws: Workspace,
     targetKind: 'issue' | 'document',
     target: string
-): workspace.Backlink[] {
-    return ws.backlinks.find((e) => e.targetKind === targetKind && e.target === target)?.sources ?? [];
+): Backlink[] {
+    return (
+        ws.backlinks.find((e) => e.targetKind === targetKind && e.target === target)?.sources ?? []
+    );
 }
