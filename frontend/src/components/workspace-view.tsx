@@ -143,8 +143,11 @@ export function WorkspaceView() {
     // project. It only makes sense once a workspace with projects is open.
     const sidebarTop = ws && ws.projects.length > 0 && (
         <Select value={activeProjectKey ?? undefined} onValueChange={setActiveProjectKey}>
-            <SelectTrigger size="sm" className="w-full">
-                <SelectValue placeholder="Project"/>
+            <SelectTrigger
+                size="sm"
+                className="w-fit max-w-full justify-start gap-1 rounded-sm border-none bg-transparent p-1 -m-1 text-base font-semibold shadow-none hover:bg-muted data-[size=sm]:h-auto"
+            >
+                <SelectValue placeholder="Project" className="flex-none truncate"/>
             </SelectTrigger>
             <SelectContent>
                 {ws.projects.map((p) => (
