@@ -67,7 +67,7 @@ export function NewIssueDialog({
                             </SelectTrigger>
                             <SelectContent>
                                 {project.issueTypes.map((t) => (
-                                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                                    <SelectItem key={t} value={t} label={t}>{t}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>

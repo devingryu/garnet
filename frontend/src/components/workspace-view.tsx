@@ -153,7 +153,7 @@ export function WorkspaceView() {
             </SelectTrigger>
             <SelectContent>
                 {ws.projects.map((p) => (
-                    <SelectItem key={p.key} value={p.key}>{p.key} — {p.name}</SelectItem>
+                    <SelectItem key={p.key} value={p.key} label={`${p.key} — ${p.name}`}>{p.key} — {p.name}</SelectItem>
                 ))}
             </SelectContent>
         </Select>

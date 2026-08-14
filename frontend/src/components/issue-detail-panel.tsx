@@ -141,7 +141,7 @@ export function IssueDetailPanel({
                                 </SelectTrigger>
                                 <SelectContent>
                                     {statusOptions.map((s) => (
-                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                        <SelectItem key={s.id} value={s.id} label={s.name}>{s.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -176,15 +176,15 @@ export function IssueDetailPanel({
                                         <SelectValue/>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                                        <SelectItem value={UNASSIGNED} label="Unassigned">Unassigned</SelectItem>
                                         {unknownAssignee && (
-                                            <SelectItem value={unknownAssignee}>{unknownAssignee}</SelectItem>
+                                            <SelectItem value={unknownAssignee} label={unknownAssignee}>{unknownAssignee}</SelectItem>
                                         )}
                                         {project.members.map((m) => (
-                                            <SelectItem key={m.email} value={m.email}>{m.name}</SelectItem>
+                                            <SelectItem key={m.email} value={m.email} label={m.name}>{m.name}</SelectItem>
                                         ))}
                                         <SelectSeparator/>
-                                        <SelectItem value={ADD_MEMBER}>+ Add member…</SelectItem>
+                                        <SelectItem value={ADD_MEMBER} label="+ Add member…">+ Add member…</SelectItem>
                                     </SelectContent>
                                 </Select>
                             );
@@ -222,7 +222,7 @@ export function IssueDetailPanel({
                                 </SelectTrigger>
                                 <SelectContent>
                                     {LINK_TYPES.map((t) => (
-                                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                                        <SelectItem key={t} value={t} label={t}>{t}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
