@@ -7,10 +7,11 @@ Garnet — a local-first, file-based project management app (issues, docs, code 
 - Keep this file minimal. Don't write repeatable procedures here — extract them as a skill in [.agents/skills](.agents/skills) and link it instead.
 - When a new repeatable task appears (build, run, applying design, etc.), consider extracting it into a skill first.
 
+This repo is the code checkout for a Garnet workspace — it's normally opened as `repos/garnet/` beneath that workspace's root, not on its own. The workspace root's own `AGENTS.md`/`CLAUDE.md` has the product docs and decisions links (`notes/gh-1/requirements.md`, `decisions/`) and governs when working from there.
+
 ## Product
 
-- [docs/issues/gh-1/requirements.md](docs/issues/gh-1/requirements.md) — what Garnet is, the data model, and the milestone plan (M1–M6). Read this before implementing any milestone work.
-- [docs/decisions/](docs/decisions/) — architecture decisions (ADRs) with the alternatives considered, not just the outcome. Check here before revisiting something that looks already decided.
+Product requirements and ADRs live in the containing workspace, not here — see its `AGENTS.md`.
 
 ## Design
 
