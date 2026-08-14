@@ -88,3 +88,8 @@ func (a *App) AddIssueLink(path, issueID, linkType, target string) (*workspace.I
 func (a *App) AddProjectMember(path, projectKey, name, email string) (*workspace.Project, error) {
 	return workspace.AddProjectMember(path, projectKey, name, email)
 }
+
+// AddTimelineNote appends a manual note to an issue's timeline.
+func (a *App) AddTimelineNote(path, issueID, body string) (*workspace.Issue, error) {
+	return workspace.AddTimelineNote(path, issueID, body)
+}

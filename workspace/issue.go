@@ -270,8 +270,9 @@ func SetIssueTitle(root, issueID, title string) (*Issue, error) {
 
 // TransitionIssueStatus moves an issue to newStatus. If the issue's project
 // declares a workflow, the transition must be allowed by it; a project with
-// no workflow can't be validated against, so any status is accepted. This
-// does not append a timeline entry — that's M3's job (ADR 0006 scope).
+// no workflow can't be validated against, so any status is accepted.
+// Requires an identity (to attribute the resulting timeline entry to
+// someone) — see ADR 0006.
 func TransitionIssueStatus(root, issueID, newStatus string) (*Issue, error) {
 	dir := filepath.Join(root, "issues", issueID)
 	meta, err := readIssueMeta(dir)
@@ -285,7 +286,59 @@ func TransitionIssueStatus(root, issueID, newStatus string) (*Issue, error) {
 		}
 	}
 
+	identity, err := LoadIdentity(root)
+	if err != nil {
+		return nil, fmt.Errorf("loading identity: %w", err)
+	}
+	if identity == nil {
+		return nil, errors.New("no identity configured for this workspace — set one up before changing status")
+	}
+
+	oldStatus := meta.Status
 	meta.Status = newStatus
+	meta.Timeline = append(meta.Timeline, TimelineEntry{
+		At:   time.Now().UTC(),
+		By:   identity.Email,
+		Kind: "status",
+		From: oldStatus,
+		To:   newStatus,
+	})
+
+	if err := writeIssueMeta(dir, meta); err != nil {
+		return nil, err
+	}
+	return loadIssue(dir, issueID)
+}
+
+// AddTimelineNote appends a manual note to an issue's timeline — the part
+// of history that can't be inferred from a status change (ADR 0006).
+// Requires an identity to attribute the note to someone.
+func AddTimelineNote(root, issueID, body string) (*Issue, error) {
+	if strings.TrimSpace(body) == "" {
+		return nil, errors.New("note body is required")
+	}
+
+	dir := filepath.Join(root, "issues", issueID)
+	meta, err := readIssueMeta(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	identity, err := LoadIdentity(root)
+	if err != nil {
+		return nil, fmt.Errorf("loading identity: %w", err)
+	}
+	if identity == nil {
+		return nil, errors.New("no identity configured for this workspace — set one up before adding a note")
+	}
+
+	meta.Timeline = append(meta.Timeline, TimelineEntry{
+		At:   time.Now().UTC(),
+		By:   identity.Email,
+		Kind: "note",
+		Body: body,
+	})
+
 	if err := writeIssueMeta(dir, meta); err != nil {
 		return nil, err
 	}

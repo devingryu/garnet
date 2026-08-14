@@ -9,6 +9,7 @@ import {allowedNextStatuses} from '@/lib/workflow';
 import {
     AddIssueLink,
     AddProjectMember,
+    AddTimelineNote,
     SetIssueAssignee,
     SetIssueParent,
     SetIssueTitle,
@@ -19,6 +20,11 @@ import type {workspace} from '../../wailsjs/go/models';
 
 const LINK_TYPES = ['blocks', 'relates-to', 'duplicates'];
 const UNASSIGNED = '__unassigned__';
+
+function formatTimestamp(at: unknown): string {
+    const d = new Date(at as string);
+    return isNaN(d.getTime()) ? '' : d.toLocaleString();
+}
 
 function Field({label, children}: {label: string; children: ReactNode}) {
     return (
@@ -53,6 +59,7 @@ export function IssueDetailDialog({
     const [linkTarget, setLinkTarget] = useState('');
     const [newMemberName, setNewMemberName] = useState('');
     const [newMemberEmail, setNewMemberEmail] = useState('');
+    const [noteBody, setNoteBody] = useState('');
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -97,7 +104,7 @@ export function IssueDetailDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
                 <div className="grid grid-cols-[1fr_200px] gap-6">
                     {/* Document: a title, then the body — not a form field. */}
                     <div className="flex min-w-0 flex-col gap-2">
@@ -264,6 +271,50 @@ export function IssueDetailDialog({
                                 </Button>
                             </div>
                         </Field>
+                    </div>
+                </div>
+
+                <div className="mt-2 flex flex-col gap-2">
+                    <span className="text-xs text-muted-foreground">Timeline</span>
+                    <div className="flex gap-2">
+                        <Textarea
+                            value={noteBody}
+                            onChange={(e) => setNoteBody(e.target.value)}
+                            placeholder="Add a note…"
+                            className="min-h-16 flex-1"
+                        />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={!noteBody.trim()}
+                            onClick={() =>
+                                run(async () => {
+                                    const updated = await AddTimelineNote(path, issue.id, noteBody.trim());
+                                    onMutate(updated);
+                                    setNoteBody('');
+                                })
+                            }
+                        >
+                            Add note
+                        </Button>
+                    </div>
+
+                    <div className="flex max-h-48 flex-col gap-2 overflow-y-auto">
+                        {[...issue.timeline].reverse().map((entry, i) => (
+                            <div key={i} className="text-sm">
+                                <p>
+                                    {entry.kind === 'status'
+                                        ? `Moved from ${entry.from || '—'} to ${entry.to}`
+                                        : entry.body}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {entry.by} · {formatTimestamp(entry.at)}
+                                </p>
+                            </div>
+                        ))}
+                        {issue.timeline.length === 0 && (
+                            <p className="text-sm text-muted-foreground">No activity yet.</p>
+                        )}
                     </div>
                 </div>
             </DialogContent>

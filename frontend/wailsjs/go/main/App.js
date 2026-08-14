@@ -10,6 +10,10 @@ export function AddProjectMember(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['AddProjectMember'](arg1, arg2, arg3, arg4);
 }
 
+export function AddTimelineNote(arg1, arg2, arg3) {
+  return window['go']['main']['App']['AddTimelineNote'](arg1, arg2, arg3);
+}
+
 export function CreateIssue(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['CreateIssue'](arg1, arg2, arg3, arg4);
 }

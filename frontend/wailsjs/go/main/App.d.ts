@@ -6,6 +6,8 @@ export function AddIssueLink(arg1:string,arg2:string,arg3:string,arg4:string):Pr
 
 export function AddProjectMember(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.Project>;
 
+export function AddTimelineNote(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
+
 export function CreateIssue(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.Issue>;
 
 export function GetIdentity(arg1:string):Promise<workspace.Identity>;

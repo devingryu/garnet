@@ -131,6 +131,53 @@ func TestUpdateIssueBody_NotFound(t *testing.T) {
 	}
 }
 
+func TestAddTimelineNote(t *testing.T) {
+	root := copyFixture(t, "valid")
+	setIdentity(t, root)
+
+	issue, err := AddTimelineNote(root, "GRNT-1", "Parked pending review.")
+	if err != nil {
+		t.Fatalf("AddTimelineNote() returned error: %v", err)
+	}
+	if len(issue.Timeline) != 3 { // 2 from the fixture + this note
+		t.Fatalf("expected 3 timeline entries, got %d: %+v", len(issue.Timeline), issue.Timeline)
+	}
+	entry := issue.Timeline[len(issue.Timeline)-1]
+	if entry.Kind != "note" || entry.Body != "Parked pending review." {
+		t.Errorf("unexpected timeline entry: %+v", entry)
+	}
+	if entry.By != "test@example.com" {
+		t.Errorf("expected entry attributed to identity, got %q", entry.By)
+	}
+	// Status change fields shouldn't leak into a note entry.
+	if entry.From != "" || entry.To != "" {
+		t.Errorf("expected empty From/To on a note entry, got %+v", entry)
+	}
+}
+
+func TestAddTimelineNote_RequiresIdentity(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := AddTimelineNote(root, "GRNT-1", "note"); err == nil {
+		t.Fatal("expected an error when no identity is configured, got nil")
+	}
+}
+
+func TestAddTimelineNote_RequiresBody(t *testing.T) {
+	root := copyFixture(t, "valid")
+	setIdentity(t, root)
+	if _, err := AddTimelineNote(root, "GRNT-1", "   "); err == nil {
+		t.Fatal("expected an error for a whitespace-only note, got nil")
+	}
+}
+
+func TestAddTimelineNote_NotFound(t *testing.T) {
+	root := copyFixture(t, "valid")
+	setIdentity(t, root)
+	if _, err := AddTimelineNote(root, "GRNT-999", "note"); err == nil {
+		t.Fatal("expected an error for a nonexistent issue, got nil")
+	}
+}
+
 func TestSetIssueTitle(t *testing.T) {
 	root := copyFixture(t, "valid")
 
@@ -152,6 +199,7 @@ func TestSetIssueTitle_RequiresTitle(t *testing.T) {
 
 func TestTransitionIssueStatus_Valid(t *testing.T) {
 	root := copyFixture(t, "valid")
+	setIdentity(t, root)
 
 	issue, err := TransitionIssueStatus(root, "GRNT-1", "done")
 	if err != nil {
@@ -160,13 +208,32 @@ func TestTransitionIssueStatus_Valid(t *testing.T) {
 	if issue.Status != "done" {
 		t.Errorf("expected status 'done', got %q", issue.Status)
 	}
-	if len(issue.Timeline) != 2 {
-		t.Errorf("expected timeline untouched by M2's status transition (M3's job), got %d entries", len(issue.Timeline))
+	if len(issue.Timeline) != 3 { // 2 from the fixture + this transition
+		t.Fatalf("expected 3 timeline entries, got %d: %+v", len(issue.Timeline), issue.Timeline)
+	}
+	entry := issue.Timeline[len(issue.Timeline)-1]
+	if entry.Kind != "status" || entry.From != "in-progress" || entry.To != "done" {
+		t.Errorf("unexpected timeline entry: %+v", entry)
+	}
+	if entry.By != "test@example.com" {
+		t.Errorf("expected entry attributed to identity, got %q", entry.By)
+	}
+	if entry.At.IsZero() {
+		t.Error("expected entry.At to be set")
+	}
+}
+
+func TestTransitionIssueStatus_RequiresIdentity(t *testing.T) {
+	root := copyFixture(t, "valid")
+	// deliberately no setIdentity(t, root)
+	if _, err := TransitionIssueStatus(root, "GRNT-1", "done"); err == nil {
+		t.Fatal("expected an error when no identity is configured, got nil")
 	}
 }
 
 func TestTransitionIssueStatus_InvalidTransition(t *testing.T) {
 	root := copyFixture(t, "valid")
+	setIdentity(t, root)
 
 	// GRNT-1 starts "in-progress"; workflow only allows in-progress -> {todo, done}.
 	if _, err := TransitionIssueStatus(root, "GRNT-1", "in-progress"); err == nil {
@@ -176,6 +243,7 @@ func TestTransitionIssueStatus_InvalidTransition(t *testing.T) {
 
 func TestTransitionIssueStatus_UnknownStatus(t *testing.T) {
 	root := copyFixture(t, "valid")
+	setIdentity(t, root)
 	if _, err := TransitionIssueStatus(root, "GRNT-1", "not-a-real-status"); err == nil {
 		t.Fatal("expected an error for a status not declared by the workflow, got nil")
 	}
@@ -183,6 +251,7 @@ func TestTransitionIssueStatus_UnknownStatus(t *testing.T) {
 
 func TestTransitionIssueStatus_NoWorkflowAllowsAnything(t *testing.T) {
 	root := copyFixture(t, "valid-no-warnings")
+	setIdentity(t, root)
 
 	issue, err := TransitionIssueStatus(root, "GRNT-1", "anything-goes")
 	if err != nil {
