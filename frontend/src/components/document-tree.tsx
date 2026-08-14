@@ -12,7 +12,8 @@ function Node({node, onSelect, depth}: {node: DocTreeNode; onSelect: (path: stri
             <button
                 onClick={() => onSelect(node.path)}
                 style={indent}
-                className="block w-full rounded-sm px-2 py-1 text-left text-sm hover:bg-muted"
+                className="block w-full truncate rounded-sm px-2 py-1 text-left text-sm hover:bg-muted"
+                title={node.path}
             >
                 {node.name}
             </button>
@@ -24,7 +25,8 @@ function Node({node, onSelect, depth}: {node: DocTreeNode; onSelect: (path: stri
             <button
                 onClick={() => setOpen((o) => !o)}
                 style={indent}
-                className="block w-full rounded-sm px-2 py-1 text-left text-sm font-medium hover:bg-muted"
+                className="block w-full truncate rounded-sm px-2 py-1 text-left text-sm font-medium hover:bg-muted"
+                title={node.name}
             >
                 {open ? '▾' : '▸'} {node.name}
             </button>
