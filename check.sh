@@ -29,3 +29,7 @@ go test $GO_PACKAGES
 
 echo '==> frontend'
 cd frontend && bun run check
+
+# E2E (Playwright, against a real `wails dev`) is deliberately not part of
+# this fast pre-commit gate — it boots the whole app and is slower. Run it
+# yourself with `bun run test:e2e` — see .agents/skills/e2e-test/SKILL.md.
