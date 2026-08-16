@@ -48,9 +48,26 @@ func (a *App) SelectWorkspaceFolder(title string) (string, error) {
 	})
 }
 
-// OpenWorkspace reads the workspace rooted at path from disk.
+// OpenWorkspace reads the workspace rooted at path from disk. Used both for
+// a real user-initiated open and for the frontend's own background re-reads
+// after a mutation — it does not touch the recent-workspaces list itself,
+// since a reload isn't "opening" anything a person chose. Call
+// RecordRecentWorkspace separately, only from an actual open.
 func (a *App) OpenWorkspace(path string) (*workspace.Workspace, error) {
 	return coded(workspace.Open(path))
+}
+
+// RecentWorkspaces returns recently opened workspace roots, most recent
+// first, for a VSCode-style quick-reopen list.
+func (a *App) RecentWorkspaces() ([]workspace.RecentWorkspace, error) {
+	return coded(workspace.RecentWorkspaces())
+}
+
+// RecordRecentWorkspace records path as just-opened by the user. Call this
+// once, right after a successful OpenWorkspace triggered by an actual open
+// action — not after every background reload.
+func (a *App) RecordRecentWorkspace(path string) error {
+	return codedOnly(workspace.RecordRecentWorkspace(path))
 }
 
 // GetIdentity returns the identity configured for the workspace at path, or
@@ -104,6 +121,11 @@ func (a *App) SetIssueParent(path, issueID, parentID string) (*workspace.Issue, 
 // AddIssueLink appends a typed link from one issue to another.
 func (a *App) AddIssueLink(path, issueID, linkType, target string) (*workspace.Issue, error) {
 	return coded(workspace.AddIssueLink(path, issueID, linkType, target))
+}
+
+// CreateProject declares a new project at projects/<key>/project.md.
+func (a *App) CreateProject(path, key, name string) (*workspace.Project, error) {
+	return coded(workspace.CreateProject(path, key, name))
 }
 
 // AddProjectMember registers a person against a project, so they become

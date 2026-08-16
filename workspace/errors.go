@@ -37,6 +37,10 @@ const (
 	CodeDocumentPathReserved = "document_path_reserved"
 	CodeDocumentUnreadable   = "document_unreadable"
 	CodeTodoNotFound         = "todo_not_found"
+	CodeProjectKeyRequired   = "project_key_required"
+	CodeProjectKeyInvalid    = "project_key_invalid"
+	CodeProjectNameRequired  = "project_name_required"
+	CodeProjectAlreadyExists = "project_already_exists"
 )
 
 // CodedError is a failure the UI is expected to show to a person. Code says
@@ -259,5 +263,29 @@ func errTodoNotFound(issueID string, line int) error {
 		Code:    CodeTodoNotFound,
 		Params:  map[string]string{"issue": issueID, "line": strconv.Itoa(line)},
 		Message: fmt.Sprintf("issue %q has no checklist item on line %d", issueID, line),
+	}
+}
+
+func errProjectKeyRequired() error {
+	return &CodedError{Code: CodeProjectKeyRequired, Message: "project key is required"}
+}
+
+func errProjectKeyInvalid(key string) error {
+	return &CodedError{
+		Code:    CodeProjectKeyInvalid,
+		Params:  map[string]string{"key": key},
+		Message: fmt.Sprintf("project key %q must contain only letters, digits, and underscores", key),
+	}
+}
+
+func errProjectNameRequired() error {
+	return &CodedError{Code: CodeProjectNameRequired, Message: "project name is required"}
+}
+
+func errProjectAlreadyExists(key string) error {
+	return &CodedError{
+		Code:    CodeProjectAlreadyExists,
+		Params:  map[string]string{"key": key},
+		Message: fmt.Sprintf("a project already exists at key %q", key),
 	}
 }

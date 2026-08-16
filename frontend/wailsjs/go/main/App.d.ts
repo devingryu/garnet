@@ -16,11 +16,17 @@ export function CloneProjectRepos(arg1:string,arg2:string):Promise<workspace.Clo
 
 export function CreateIssue(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.Issue>;
 
+export function CreateProject(arg1:string,arg2:string,arg3:string):Promise<workspace.Project>;
+
 export function GetIdentity(arg1:string):Promise<workspace.Identity>;
 
 export function OpenWorkspace(arg1:string):Promise<workspace.Workspace>;
 
 export function ReadDocument(arg1:string,arg2:string):Promise<string>;
+
+export function RecentWorkspaces():Promise<Array<workspace.RecentWorkspace>>;
+
+export function RecordRecentWorkspace(arg1:string):Promise<void>;
 
 export function RemoveProjectRepo(arg1:string,arg2:string,arg3:string):Promise<workspace.Project>;
 

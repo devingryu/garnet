@@ -18,7 +18,8 @@
     "projectPlaceholder": "Project",
     "nothingSelected": "Select Issues or a document from the sidebar to get started.",
     "loadFailures_one": "{{count}} item failed to load",
-    "loadFailures_other": "{{count}} items failed to load"
+    "loadFailures_other": "{{count}} items failed to load",
+    "recent": "Recent"
   },
   "sidebar": {
     "issues": "Issues",
@@ -82,6 +83,14 @@
   },
   "document": {
     "loading": "Loading…"
+  },
+  "project": {
+    "new": "New project",
+    "newHeading": "New project",
+    "keyPlaceholder": "Key, e.g. GRNT",
+    "namePlaceholder": "Name",
+    "create": "Create",
+    "creating": "Creating…"
   },
   "newIssue": {
     "heading": "New issue in {{project}}",
@@ -153,6 +162,10 @@
     "document_not_markdown": "Only .md documents are supported — {{path}} isn't one.",
     "document_path_reserved": "{{path}} is reserved and can't hold documents.",
     "document_unreadable": "Couldn't read {{path}}.",
-    "todo_not_found": "That checklist item no longer exists — {{issue}} may have been edited."
+    "todo_not_found": "That checklist item no longer exists — {{issue}} may have been edited.",
+    "project_key_required": "A project key is required.",
+    "project_key_invalid": "\"{{key}}\" can only contain letters, digits, and underscores.",
+    "project_name_required": "A project name is required.",
+    "project_already_exists": "A project already exists at \"{{key}}\"."
   }
 }

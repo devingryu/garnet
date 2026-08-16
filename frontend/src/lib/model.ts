@@ -33,6 +33,7 @@ export type Backlink = Plain<workspace.Backlink>;
 export type CloneResult = Plain<workspace.CloneResult>;
 export type TimelineEntry = Plain<workspace.TimelineEntry>;
 export type TodoItem = Plain<workspace.TodoItem>;
+export type RecentWorkspace = Plain<workspace.RecentWorkspace>;
 
 /** A workspace and the path it was read from. They are set together and
  *  cleared together, so they are one value — not two states plus a `!`

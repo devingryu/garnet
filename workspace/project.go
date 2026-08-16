@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -103,6 +105,48 @@ func writeProjectFrontmatter(dir string, p *Project) error {
 		return fmt.Errorf("encoding project.md: %w", err)
 	}
 	return writeFile(filepath.Join(dir, "project.md"), joinFrontmatter(fm, p.Description))
+}
+
+// projectKeyRE restricts a project key to letters, digits, and underscores:
+// no "-" (issue IDs split on the last hyphen to recover the project key —
+// see projectKeyFromID — so a hyphen in the key itself would make that
+// ambiguous), and nothing that could act as a path separator, since the key
+// becomes projects/<key> directly on disk.
+var projectKeyRE = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
+
+// CreateProject declares a new project at projects/<key>/project.md, with no
+// repos, issue types, or members yet — those are added afterward via
+// AddProjectRepo, SetProjectIssueTypes, and AddProjectMember.
+func CreateProject(root, key, name string) (*Project, error) {
+	if strings.TrimSpace(key) == "" {
+		return nil, errProjectKeyRequired()
+	}
+	if !projectKeyRE.MatchString(key) {
+		return nil, errProjectKeyInvalid(key)
+	}
+	if strings.TrimSpace(name) == "" {
+		return nil, errProjectNameRequired()
+	}
+
+	dir := filepath.Join(root, "projects", key)
+	if dirExists(dir) {
+		return nil, errProjectAlreadyExists(key)
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return nil, fmt.Errorf("creating project directory: %w", err)
+	}
+
+	project := &Project{
+		Key:        key,
+		Name:       name,
+		Repos:      []Repo{},
+		IssueTypes: []string{},
+		Members:    []Member{},
+	}
+	if err := writeProjectFrontmatter(dir, project); err != nil {
+		return nil, err
+	}
+	return loadProject(dir)
 }
 
 // AddProjectMember registers a person against a project, restricting who can

@@ -296,6 +296,64 @@ func TestSetIssueAssignee_RestrictedToMembers(t *testing.T) {
 	}
 }
 
+func TestCreateProject_Success(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	project, err := CreateProject(root, "WIDG", "Widgets")
+	if err != nil {
+		t.Fatalf("CreateProject() returned error: %v", err)
+	}
+	if project.Key != "WIDG" || project.Name != "Widgets" {
+		t.Errorf("expected key/name as given, got %+v", project)
+	}
+	if len(project.Repos) != 0 || len(project.IssueTypes) != 0 || len(project.Members) != 0 {
+		t.Errorf("expected a brand new project to declare nothing yet, got %+v", project)
+	}
+
+	if _, err := os.Stat(filepath.Join(root, "projects", "WIDG", "project.md")); err != nil {
+		t.Errorf("expected project.md to exist: %v", err)
+	}
+
+	// Round-trips through a fresh load, not just the in-memory return value.
+	reloaded, err := loadProject(filepath.Join(root, "projects", "WIDG"))
+	if err != nil {
+		t.Fatalf("loadProject() returned error: %v", err)
+	}
+	if reloaded.Key != "WIDG" {
+		t.Errorf("expected reloaded key WIDG, got %q", reloaded.Key)
+	}
+}
+
+func TestCreateProject_RequiresKey(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := CreateProject(root, "", "Widgets"); err == nil {
+		t.Fatal("expected an error for an empty key, got nil")
+	}
+}
+
+func TestCreateProject_RequiresName(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := CreateProject(root, "WIDG", ""); err == nil {
+		t.Fatal("expected an error for an empty name, got nil")
+	}
+}
+
+func TestCreateProject_RejectsInvalidKey(t *testing.T) {
+	root := copyFixture(t, "valid")
+	for _, key := range []string{"WID-G", "WID/G", "../escape", "wid g"} {
+		if _, err := CreateProject(root, key, "Widgets"); err == nil {
+			t.Errorf("CreateProject(%q): expected an error, got nil", key)
+		}
+	}
+}
+
+func TestCreateProject_RejectsExistingKey(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := CreateProject(root, "GRNT", "Duplicate"); err == nil {
+		t.Fatal("expected an error creating a project at an already-used key, got nil")
+	}
+}
+
 func TestAddProjectMember(t *testing.T) {
 	root := copyFixture(t, "valid")
 

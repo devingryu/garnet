@@ -30,6 +30,10 @@ export function CreateIssue(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['CreateIssue'](arg1, arg2, arg3, arg4);
 }
 
+export function CreateProject(arg1, arg2, arg3) {
+  return window['go']['main']['App']['CreateProject'](arg1, arg2, arg3);
+}
+
 export function GetIdentity(arg1) {
   return window['go']['main']['App']['GetIdentity'](arg1);
 }
@@ -40,6 +44,14 @@ export function OpenWorkspace(arg1) {
 
 export function ReadDocument(arg1, arg2) {
   return window['go']['main']['App']['ReadDocument'](arg1, arg2);
+}
+
+export function RecentWorkspaces() {
+  return window['go']['main']['App']['RecentWorkspaces']();
+}
+
+export function RecordRecentWorkspace(arg1) {
+  return window['go']['main']['App']['RecordRecentWorkspace'](arg1);
 }
 
 export function RemoveProjectRepo(arg1, arg2, arg3) {

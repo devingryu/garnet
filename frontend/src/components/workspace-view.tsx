@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {LayoutGrid, Plus, RotateCw} from 'lucide-react';
 import {useTranslation} from 'react-i18next';
 import {cn} from '@/lib/utils';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import {IdentitySetupDialog} from '@/components/identity-setup-dialog';
 import {NewIssueDialog} from '@/components/new-issue-dialog';
+import {NewProjectDialog} from '@/components/new-project-dialog';
 import {IssueList} from '@/components/issue-list';
 import {IssueBoard} from '@/components/issue-board';
 import {IssueDetailPanel} from '@/components/issue-detail-panel';
@@ -28,11 +29,21 @@ import {backlinksFor} from '@/lib/documents';
 import {useWorkspace} from '@/lib/use-workspace';
 import {
     GetIdentity,
+    RecentWorkspaces,
+    RecordRecentWorkspace,
     SelectWorkspaceFolder,
     TransitionIssueStatus,
     WriteDocument,
 } from '../../wailsjs/go/main/App';
-import type {Identity} from '@/lib/model';
+import type {Identity, RecentWorkspace} from '@/lib/model';
+
+/** The last path segment, for the bold line of a recent-workspace entry —
+ *  handles both POSIX and Windows separators since either could show up in
+ *  a stored path. */
+function baseName(path: string): string {
+    const parts = path.split(/[/\\]/).filter(Boolean);
+    return parts[parts.length - 1] ?? path;
+}
 
 export function WorkspaceView() {
     const {t} = useTranslation();
@@ -45,6 +56,19 @@ export function WorkspaceView() {
     const [newDocumentOpen, setNewDocumentOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [settingsSection, setSettingsSection] = useState<SettingsSection>('issueTypes');
+    const [newProjectOpen, setNewProjectOpen] = useState(false);
+    const [recentWorkspaces, setRecentWorkspaces] = useState<RecentWorkspace[]>([]);
+
+    // Fetched once, when the view first mounts — GARNET-24. A fresh list
+    // would only matter after opening another workspace, which reloads this
+    // same component tree rather than re-mounting it, so there's no later
+    // point where re-fetching would show something new.
+    useEffect(() => {
+        void run(() => RecentWorkspaces()).then((result) => {
+            if (result.ok) setRecentWorkspaces(result.value);
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Open tabs, VSCode-style: they persist across project switches, and
     // clicking something already open focuses it instead of duplicating it.
@@ -74,12 +98,10 @@ export function WorkspaceView() {
         setSettingsOpen(true);
     }
 
-    async function openWorkspace() {
-        const picked = await run(() => SelectWorkspaceFolder(t('workspace.chooseFolder')));
-        // "" means the user dismissed the native dialog — not a failure.
-        if (!picked.ok || !picked.value) return;
-        const selectedPath = picked.value;
-
+    /** Opens path and records it as recently-used. Shared by the native
+     *  folder dialog and by clicking a recent-workspace entry (GARNET-24) —
+     *  from here on the two flows are identical. */
+    async function openWorkspaceAt(selectedPath: string) {
         const data = await load(selectedPath);
         if (!data) return;
         const firstProject = data.projects[0];
@@ -88,9 +110,22 @@ export function WorkspaceView() {
         }
 
         const found = await run(() => GetIdentity(selectedPath));
-        if (!found.ok) return;
-        setIdentity(found.value ?? null);
-        if (!found.value) setIdentityDialogOpen(true);
+        if (found.ok) {
+            setIdentity(found.value ?? null);
+            if (!found.value) setIdentityDialogOpen(true);
+        }
+
+        // Best-effort: a real user chose to open this workspace, so it's
+        // recent now, but a failure to record that shouldn't surface as an
+        // error — the open itself already succeeded.
+        void RecordRecentWorkspace(selectedPath);
+    }
+
+    async function openWorkspace() {
+        const picked = await run(() => SelectWorkspaceFolder(t('workspace.chooseFolder')));
+        // "" means the user dismissed the native dialog — not a failure.
+        if (!picked.ok || !picked.value) return;
+        await openWorkspaceAt(picked.value);
     }
 
     const toolbar = (
@@ -115,6 +150,30 @@ export function WorkspaceView() {
                     <Button onClick={() => void openWorkspace()} disabled={pending}>
                         {pending ? t('workspace.opening') : t('workspace.open')}
                     </Button>
+
+                    {recentWorkspaces.length > 0 && (
+                        <div className="mt-4 flex w-full max-w-sm flex-col gap-1">
+                            <span className="text-xs text-muted-foreground">
+                                {t('workspace.recent')}
+                            </span>
+                            {recentWorkspaces.map((recent) => (
+                                <button
+                                    key={recent.path}
+                                    onClick={() => void openWorkspaceAt(recent.path)}
+                                    disabled={pending}
+                                    title={recent.path}
+                                    className="flex flex-col items-start rounded-sm border border-border px-3 py-2 text-left hover:bg-muted"
+                                >
+                                    <span className="text-sm font-medium">
+                                        {baseName(recent.path)}
+                                    </span>
+                                    <span className="w-full truncate text-xs text-muted-foreground">
+                                        {recent.path}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </AppShell>
         );
@@ -128,32 +187,45 @@ export function WorkspaceView() {
 
     // The library-style project switcher lives at the top of the sidebar
     // (see UI Shell & Navigation) — a dropdown, collapsed to the current
-    // project. It only makes sense once a workspace with projects is open.
+    // project. The "+" next to it always renders, even with zero projects —
+    // that's the bootstrap case GARNET-3 exists for: a workspace with no
+    // projects yet still needs a way to create the first one in-app.
     const projectItems = ws.projects.map((p) => ({value: p.key, label: `${p.key} — ${p.name}`}));
-    const sidebarTop = ws.projects.length > 0 && (
-        <Select
-            items={projectItems}
-            value={activeProject?.key}
-            onValueChange={(v) => v != null && setSelectedProjectKey(String(v))}
-        >
-            <SelectTrigger
-                size="sm"
-                className="w-fit max-w-full justify-start gap-1 rounded-sm border-none bg-transparent p-1 -m-1 text-base font-semibold shadow-none hover:bg-muted data-[size=sm]:h-auto"
+    const sidebarTop = (
+        <div className="flex items-center gap-1">
+            {ws.projects.length > 0 && (
+                <Select
+                    items={projectItems}
+                    value={activeProject?.key}
+                    onValueChange={(v) => v != null && setSelectedProjectKey(String(v))}
+                >
+                    <SelectTrigger
+                        size="sm"
+                        className="w-fit max-w-full flex-1 justify-start gap-1 rounded-sm border-none bg-transparent p-1 -m-1 text-base font-semibold shadow-none hover:bg-muted data-[size=sm]:h-auto"
+                    >
+                        <SelectValue
+                            placeholder={t('workspace.projectPlaceholder')}
+                            className="flex-none truncate"
+                        />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {/* Project keys and names are workspace data (AGENTS.md rule 11). */}
+                        {projectItems.map((item) => (
+                            <SelectItem key={item.value} value={item.value} label={item.label}>
+                                {item.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
+            <button
+                onClick={() => setNewProjectOpen(true)}
+                aria-label={t('project.new')}
+                className="shrink-0 rounded-sm p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-                <SelectValue
-                    placeholder={t('workspace.projectPlaceholder')}
-                    className="flex-none truncate"
-                />
-            </SelectTrigger>
-            <SelectContent>
-                {/* Project keys and names are workspace data (AGENTS.md rule 11). */}
-                {projectItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value} label={item.label}>
-                        {item.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
+                <Plus className="size-3.5" />
+            </button>
+        </div>
     );
 
     // Sidebar's main scrollable body: an Explorer-style "Issues" entry for
@@ -356,6 +428,16 @@ export function WorkspaceView() {
                     onCreated={(docPath) => {
                         void reload();
                         openDocument(docPath);
+                    }}
+                />
+
+                <NewProjectDialog
+                    path={path}
+                    open={newProjectOpen}
+                    onOpenChange={setNewProjectOpen}
+                    onCreated={(projectKey) => {
+                        void reload();
+                        setSelectedProjectKey(projectKey);
                     }}
                 />
 
