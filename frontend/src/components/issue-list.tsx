@@ -32,6 +32,15 @@ export function IssueList({
                         {issue.id} · {issue.type} · {issue.status || t('common.empty')}
                         {issue.assignee && <> · {memberName(project, issue.assignee)}</>}
                         {issue.parent && <> · {t('issues.childOf', {parent: issue.parent})}</>}
+                        {issue.todos.length > 0 && (
+                            <>
+                                {' · '}
+                                {t('issue.todos.count', {
+                                    done: issue.todos.filter((todo) => todo.done).length,
+                                    total: issue.todos.length,
+                                })}
+                            </>
+                        )}
                     </span>
                 </button>
             ))}

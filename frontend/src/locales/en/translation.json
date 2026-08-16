@@ -62,6 +62,11 @@
       "addNote": "Add note",
       "statusChange": "Moved from {{from}} to {{to}}",
       "empty": "No activity yet."
+    },
+    "todos": {
+      "heading": "Todos",
+      "hint": "Parsed from \"- [ ]\" lines in the description above — check one to update the file directly.",
+      "count": "{{done}}/{{total}}"
     }
   },
   "member": {
@@ -147,6 +152,7 @@
     "document_path_invalid": "{{path}} isn't a valid document path.",
     "document_not_markdown": "Only .md documents are supported — {{path}} isn't one.",
     "document_path_reserved": "{{path}} is reserved and can't hold documents.",
-    "document_unreadable": "Couldn't read {{path}}."
+    "document_unreadable": "Couldn't read {{path}}.",
+    "todo_not_found": "That checklist item no longer exists — {{issue}} may have been edited."
   }
 }

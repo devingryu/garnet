@@ -38,6 +38,8 @@ export function SetProjectIssueTypes(arg1:string,arg2:string,arg3:Array<string>)
 
 export function SetWorkflow(arg1:string,arg2:string,arg3:Array<workspace.Status>,arg4:Array<workspace.Transition>):Promise<workspace.Project>;
 
+export function ToggleTodo(arg1:string,arg2:string,arg3:number):Promise<workspace.Issue>;
+
 export function TransitionIssueStatus(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
 
 export function UnarchiveProject(arg1:string,arg2:string):Promise<workspace.Project>;

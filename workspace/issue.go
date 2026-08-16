@@ -68,6 +68,9 @@ type Issue struct {
 	// Documents lists filenames in the issue directory other than
 	// .garnet.yaml and issue.md — attached docs are not parsed until M4.
 	Documents []string `json:"documents"`
+	// Todos is parsed out of Description on every read, never stored — see
+	// TodoItem and GARNET-13.
+	Todos []TodoItem `json:"todos"`
 }
 
 // projectKeyFromID returns the project key portion of an issue ID, e.g.
@@ -155,6 +158,7 @@ func loadIssue(dir, id string) (*Issue, error) {
 		Timeline:    timeline,
 		Description: description,
 		Documents:   documents,
+		Todos:       parseTodos(description),
 	}, nil
 }
 

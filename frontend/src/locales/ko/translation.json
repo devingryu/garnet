@@ -61,6 +61,11 @@
       "addNote": "노트 추가",
       "statusChange": "{{from}}에서 {{to}}(으)로 이동",
       "empty": "아직 활동이 없습니다."
+    },
+    "todos": {
+      "heading": "할 일",
+      "hint": "위 설명의 \"- [ ]\" 줄에서 추출됩니다 — 체크하면 파일이 바로 수정됩니다.",
+      "count": "{{done}}/{{total}}"
     }
   },
   "member": {
@@ -146,6 +151,7 @@
     "document_path_invalid": "{{path}}은(는) 올바른 문서 경로가 아닙니다.",
     "document_not_markdown": ".md 문서만 지원합니다 — {{path}}은(는) 해당하지 않습니다.",
     "document_path_reserved": "{{path}}은(는) 예약된 경로라 문서를 둘 수 없습니다.",
-    "document_unreadable": "{{path}}을(를) 읽을 수 없습니다."
+    "document_unreadable": "{{path}}을(를) 읽을 수 없습니다.",
+    "todo_not_found": "해당 체크리스트 항목이 더 이상 존재하지 않습니다 — {{issue}}이(가) 수정됐을 수 있습니다."
   }
 }

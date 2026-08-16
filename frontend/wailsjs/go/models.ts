@@ -88,6 +88,22 @@ export namespace workspace {
 	        this.email = source["email"];
 	    }
 	}
+	export class TodoItem {
+	    line: number;
+	    text: string;
+	    done: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new TodoItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.line = source["line"];
+	        this.text = source["text"];
+	        this.done = source["done"];
+	    }
+	}
 	export class TimelineEntry {
 	    // Go type: time
 	    at: any;
@@ -156,6 +172,7 @@ export namespace workspace {
 	    timeline: TimelineEntry[];
 	    description: string;
 	    documents: string[];
+	    todos: TodoItem[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Issue(source);
@@ -175,6 +192,7 @@ export namespace workspace {
 	        this.timeline = this.convertValues(source["timeline"], TimelineEntry);
 	        this.description = source["description"];
 	        this.documents = source["documents"];
+	        this.todos = this.convertValues(source["todos"], TodoItem);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -330,6 +348,7 @@ export namespace workspace {
 		    return a;
 		}
 	}
+	
 	
 	
 	

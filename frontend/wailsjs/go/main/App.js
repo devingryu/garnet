@@ -74,6 +74,10 @@ export function SetWorkflow(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['SetWorkflow'](arg1, arg2, arg3, arg4);
 }
 
+export function ToggleTodo(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ToggleTodo'](arg1, arg2, arg3);
+}
+
 export function TransitionIssueStatus(arg1, arg2, arg3) {
   return window['go']['main']['App']['TransitionIssueStatus'](arg1, arg2, arg3);
 }

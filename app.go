@@ -85,6 +85,12 @@ func (a *App) TransitionIssueStatus(path, issueID, newStatus string) (*workspace
 	return coded(workspace.TransitionIssueStatus(path, issueID, newStatus))
 }
 
+// ToggleTodo flips the checked state of the task-list item at line within
+// an issue's description.
+func (a *App) ToggleTodo(path, issueID string, line int) (*workspace.Issue, error) {
+	return coded(workspace.ToggleTodo(path, issueID, line))
+}
+
 // SetIssueAssignee sets an issue's assignee.
 func (a *App) SetIssueAssignee(path, issueID, email string) (*workspace.Issue, error) {
 	return coded(workspace.SetIssueAssignee(path, issueID, email))

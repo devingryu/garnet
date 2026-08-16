@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import type {ReactNode} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Button} from '@/components/ui/button';
@@ -23,6 +23,7 @@ import {
     SetIssueAssignee,
     SetIssueParent,
     SetIssueTitle,
+    ToggleTodo,
     TransitionIssueStatus,
     UpdateIssueBody,
 } from '../../wailsjs/go/main/App';
@@ -43,6 +44,14 @@ function Field({label, children}: {label: string; children: ReactNode}) {
 /**
  * Mount this with `key={issue.id}`: the draft title/body/parent state is reset
  * by remounting, not by an effect that reassigns it (AGENTS.md rule 6).
+ *
+ * `body` is the one exception, and it's narrow on purpose: toggling a todo
+ * below rewrites `issue.description` out from under this same panel without
+ * remounting it (still the same issue.id), so the draft can go stale and a
+ * later blur would overwrite the toggle right back off. The effect further
+ * down resyncs `body` when `issue.description` changes from outside — but
+ * only while there's no unsaved local edit, so it never clobbers something
+ * the user is actively typing.
  */
 export function IssueDetailPanel({
     issue,
@@ -69,6 +78,21 @@ export function IssueDetailPanel({
     const [linkType, setLinkType] = useState<string>(LINK_TYPES[0]);
     const [linkTarget, setLinkTarget] = useState('');
     const [noteBody, setNoteBody] = useState('');
+
+    // See the doc comment above: follows issue.description when nothing
+    // local is unsaved, so a todo toggle's write doesn't get reverted by a
+    // stale draft on the next blur.
+    const lastSyncedDescription = useRef(issue.description);
+    useEffect(() => {
+        if (body === lastSyncedDescription.current) {
+            setBody(issue.description);
+        }
+        lastSyncedDescription.current = issue.description;
+        // body is intentionally excluded: this effect reacts to description
+        // changing, and re-reads body via the ref/functional check above,
+        // not by depending on it directly.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [issue.description]);
 
     const workflow = project?.workflow;
     const next = allowedNextStatuses(workflow, issue.status);
@@ -120,6 +144,51 @@ export function IssueDetailPanel({
                         placeholder={t('issue.descriptionPlaceholder')}
                         className="min-h-64 resize-none border-none bg-transparent px-0 text-base leading-relaxed shadow-none focus-visible:ring-0"
                     />
+
+                    {issue.todos.length > 0 && (
+                        <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                    {t('issue.todos.heading')}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    {t('issue.todos.count', {
+                                        done: issue.todos.filter((todo) => todo.done).length,
+                                        total: issue.todos.length,
+                                    })}
+                                </span>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                {issue.todos.map((todo) => (
+                                    <label
+                                        key={todo.line}
+                                        className="flex items-start gap-2 text-sm"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={todo.done}
+                                            onChange={() =>
+                                                void mutate((path) =>
+                                                    ToggleTodo(path, issue.id, todo.line)
+                                                )
+                                            }
+                                            className="mt-1"
+                                        />
+                                        <span
+                                            className={
+                                                todo.done
+                                                    ? 'text-muted-foreground line-through'
+                                                    : undefined
+                                            }
+                                        >
+                                            {todo.text}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{t('issue.todos.hint')}</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Metadata panel — everything that isn't the document itself. */}

@@ -132,6 +132,16 @@ export function IssueBoard({
                                     <p className="font-medium">{issue.title || issue.id}</p>
                                     <p className="mt-0.5 text-xs text-muted-foreground">
                                         {issue.id} · {issue.type}
+                                        {issue.todos.length > 0 && (
+                                            <>
+                                                {' · '}
+                                                {t('issue.todos.count', {
+                                                    done: issue.todos.filter((todo) => todo.done)
+                                                        .length,
+                                                    total: issue.todos.length,
+                                                })}
+                                            </>
+                                        )}
                                     </p>
                                 </div>
                             ))}

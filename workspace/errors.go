@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 // Error codes are a stable API, not internal identifiers: the frontend maps
@@ -35,6 +36,7 @@ const (
 	CodeDocumentNotMarkdown  = "document_not_markdown"
 	CodeDocumentPathReserved = "document_path_reserved"
 	CodeDocumentUnreadable   = "document_unreadable"
+	CodeTodoNotFound         = "todo_not_found"
 )
 
 // CodedError is a failure the UI is expected to show to a person. Code says
@@ -249,5 +251,13 @@ func errDocumentUnreadable(path string, cause error) error {
 		Params:  map[string]string{"path": path},
 		Message: fmt.Sprintf("reading %q: %v", path, cause),
 		cause:   cause,
+	}
+}
+
+func errTodoNotFound(issueID string, line int) error {
+	return &CodedError{
+		Code:    CodeTodoNotFound,
+		Params:  map[string]string{"issue": issueID, "line": strconv.Itoa(line)},
+		Message: fmt.Sprintf("issue %q has no checklist item on line %d", issueID, line),
 	}
 }
