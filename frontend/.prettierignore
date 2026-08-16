@@ -9,3 +9,5 @@ src/lib/utils.ts
 dist/
 node_modules/
 bun.lock
+test-results/
+playwright-report/

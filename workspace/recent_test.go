@@ -91,6 +91,28 @@ func TestRecentWorkspaces_DropsDeletedDirectories(t *testing.T) {
 	}
 }
 
+// TestRecentWorkspacesPath_EnvOverride locks in the mechanism
+// playwright.config.ts relies on to keep the E2E suite from ever touching a
+// developer's real recent-workspaces list — see recentWorkspacesPath.
+func TestRecentWorkspacesPath_EnvOverride(t *testing.T) {
+	// recentWorkspacesPathOverride takes priority over the env var, so it
+	// must be unset here rather than using useTempRecentWorkspaces.
+	prevOverride := recentWorkspacesPathOverride
+	recentWorkspacesPathOverride = ""
+	t.Cleanup(func() { recentWorkspacesPathOverride = prevOverride })
+
+	want := filepath.Join(t.TempDir(), "env-recent-workspaces.json")
+	t.Setenv("GARNET_RECENT_WORKSPACES_PATH", want)
+
+	got, err := recentWorkspacesPath()
+	if err != nil {
+		t.Fatalf("recentWorkspacesPath() returned error: %v", err)
+	}
+	if got != want {
+		t.Errorf("recentWorkspacesPath() = %q, want %q", got, want)
+	}
+}
+
 func TestRecentWorkspaces_CappedAtMax(t *testing.T) {
 	useTempRecentWorkspaces(t)
 

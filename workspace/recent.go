@@ -34,10 +34,16 @@ const maxRecentWorkspaces = 10
 var recentWorkspacesPathOverride string
 
 // recentWorkspacesPath returns where the list is stored:
-// <UserConfigDir>/garnet/recent-workspaces.json.
+// <UserConfigDir>/garnet/recent-workspaces.json — unless
+// $GARNET_RECENT_WORKSPACES_PATH is set, which playwright.config.ts does for
+// the E2E suite, so a test run never touches whatever recent-workspaces list
+// is sitting on the developer's own machine.
 func recentWorkspacesPath() (string, error) {
 	if recentWorkspacesPathOverride != "" {
 		return recentWorkspacesPathOverride, nil
+	}
+	if envPath := os.Getenv("GARNET_RECENT_WORKSPACES_PATH"); envPath != "" {
+		return envPath, nil
 	}
 	dir, err := os.UserConfigDir()
 	if err != nil {

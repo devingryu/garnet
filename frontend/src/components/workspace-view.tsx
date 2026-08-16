@@ -380,6 +380,7 @@ export function WorkspaceView() {
                         <IssueDetailPanel
                             key={openedIssue.id}
                             issue={openedIssue}
+                            issues={ws.issues}
                             project={ws.projects.find((p) => p.key === openedIssue.projectKey)}
                             referencedBy={backlinksFor(ws, 'issue', openedIssue.id)}
                             mutate={mutate}

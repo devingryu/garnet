@@ -70,6 +70,25 @@ bunx playwright install chromium
   fair game to assert on directly with Node's `fs`, since the test and the
   app run on the same machine — see `project-creation.spec.ts` for the
   pattern.
+- Assert on **outcomes** (a file on disk, a rendered element, a value that
+  survives a re-render), not on incidental UI state like an input's
+  displayed text after a selection — some components (the Combobox-based
+  `IssuePicker`, at least) don't resync their input text to the selected
+  item's label after a fresh in-session pick, only on values supplied
+  externally. Chasing that with the test is chasing a cosmetic rough edge,
+  not the thing the test should actually be protecting.
+- A closed `Combobox`'s option list stays in the DOM (just not visible) —
+  `page.getByRole('option', {name: ...})` can match more than one instance
+  once a second picker has been opened. Disambiguate with `.last()`
+  (the currently-open one) rather than assuming there's only one.
+- Any app-level state that isn't workspace data — like the recent-workspaces
+  list in `workspace/recent.go`, which lives in the OS's per-user config
+  directory — needs a way to redirect it during tests, or the suite will
+  silently pollute *your own machine's* real state every run. `recent.go`
+  checks `$GARNET_RECENT_WORKSPACES_PATH` before falling back to the real
+  path; `playwright.config.ts`'s `webServer.env` sets it to a throwaway file.
+  If you add another piece of app-level (not workspace-level) persistent
+  state, give it the same treatment before writing a test that touches it.
 
 ## Scope
 

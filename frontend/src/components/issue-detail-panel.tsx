@@ -13,6 +13,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {BacklinkList} from '@/components/backlink-list';
+import {IssuePicker} from '@/components/issue-picker';
 import {allowedNextStatuses} from '@/lib/workflow';
 import {LINK_TYPES, linkTypeLabel} from '@/lib/links';
 import {memberName} from '@/lib/members';
@@ -55,6 +56,7 @@ function Field({label, children}: {label: string; children: ReactNode}) {
  */
 export function IssueDetailPanel({
     issue,
+    issues,
     project,
     referencedBy,
     mutate,
@@ -63,6 +65,8 @@ export function IssueDetailPanel({
     onRequestAddMember,
 }: {
     issue: Issue;
+    /** The whole workspace's issues, for the Parent/Links pickers to search over. */
+    issues: Issue[];
     project: Project | undefined;
     referencedBy: Backlink[];
     /** Runs a write and re-reads the workspace; resolves false if it failed. */
@@ -276,26 +280,29 @@ export function IssueDetailPanel({
                     </Field>
 
                     <Field label={t('issue.parent')}>
-                        <Input
-                            placeholder={t('issue.parentPlaceholder')}
+                        <IssuePicker
+                            issues={issues}
+                            excludeId={issue.id}
                             value={parent}
-                            onChange={(e) => setParent(e.target.value)}
-                            onBlur={() => {
-                                if (parent === (issue.parent ?? '')) return;
-                                void mutate((path) => SetIssueParent(path, issue.id, parent));
+                            onValueChange={(id) => {
+                                setParent(id);
+                                if (id === (issue.parent ?? '')) return;
+                                void mutate((path) => SetIssueParent(path, issue.id, id));
                             }}
+                            placeholder={t('issue.parentPlaceholder')}
                         />
                     </Field>
 
                     <Field label={t('issue.links')}>
                         <div className="flex flex-col gap-1">
                             {issue.links.map((l) => (
-                                <p
+                                <button
                                     key={`${l.type}:${l.target}`}
-                                    className="text-sm text-muted-foreground"
+                                    onClick={() => onOpenIssue(l.target)}
+                                    className="text-left text-sm text-muted-foreground hover:text-primary hover:underline"
                                 >
                                     {linkTypeLabel(t, l.type)} → {l.target}
-                                </p>
+                                </button>
                             ))}
                             {issue.links.length === 0 && (
                                 <p className="text-sm text-muted-foreground">
@@ -326,10 +333,12 @@ export function IssueDetailPanel({
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <Input
-                                placeholder={t('issue.linkTargetPlaceholder')}
+                            <IssuePicker
+                                issues={issues}
+                                excludeId={issue.id}
                                 value={linkTarget}
-                                onChange={(e) => setLinkTarget(e.target.value)}
+                                onValueChange={setLinkTarget}
+                                placeholder={t('issue.linkTargetPlaceholder')}
                             />
                             <Button
                                 variant="outline"
