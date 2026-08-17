@@ -1,9 +1,12 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Textarea} from '@/components/ui/textarea';
 import {BacklinkList} from '@/components/backlink-list';
+import {MarkdownView} from '@/components/markdown-view';
+import {MarkdownViewToggle, type MarkdownViewMode} from '@/components/markdown-view-toggle';
 import {ReadDocument} from '../../wailsjs/go/main/App';
 import {useAsyncAction} from '@/lib/use-async-action';
+import {createScrollSync} from '@/lib/scroll-sync';
 import type {Backlink} from '@/lib/model';
 
 export function DocumentEditorPanel({
@@ -29,6 +32,16 @@ export function DocumentEditorPanel({
     // decides whether a blur has anything to save. null until the first read
     // lands, which is also the loading flag.
     const [onDisk, setOnDisk] = useState<string | null>(null);
+    const [mode, setMode] = useState<MarkdownViewMode>('raw');
+
+    // docPath is workspace-root-relative (e.g. "decisions/0001-x.md"); a
+    // link in it resolves against its own directory, same as sourceDir for
+    // resolveLinkTarget on the Go side.
+    const sourceDir = docPath.includes('/') ? docPath.slice(0, docPath.lastIndexOf('/')) : '';
+
+    const rawRef = useRef<HTMLTextAreaElement>(null);
+    const renderedRef = useRef<HTMLDivElement>(null);
+    const scrollSync = useRef(createScrollSync());
 
     useEffect(() => {
         let cancelled = false;
@@ -50,11 +63,52 @@ export function DocumentEditorPanel({
 
     return (
         <div className="flex flex-col gap-2">
-            {/* A document path is workspace data — never translated (rule 11). */}
-            <h2 className="text-lg font-semibold">{docPath}</h2>
+            <div className="flex items-center justify-between gap-2">
+                {/* A document path is workspace data — never translated (rule 11). */}
+                <h2 className="text-lg font-semibold">{docPath}</h2>
+                {onDisk !== null && <MarkdownViewToggle mode={mode} onChange={setMode} />}
+            </div>
 
             {onDisk === null && !error ? (
                 <p className="text-sm text-muted-foreground">{t('document.loading')}</p>
+            ) : mode === 'split' ? (
+                <div className="grid min-h-64 grid-cols-2 gap-4">
+                    <Textarea
+                        ref={rawRef}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        onBlur={() => void save()}
+                        onScroll={() => {
+                            if (rawRef.current && renderedRef.current) {
+                                scrollSync.current.onScrollA(rawRef.current, renderedRef.current);
+                            }
+                        }}
+                        className="min-h-64 resize-none overflow-y-auto border-none bg-transparent px-0 text-base leading-relaxed shadow-none focus-visible:ring-0"
+                    />
+                    <div
+                        ref={renderedRef}
+                        onScroll={() => {
+                            if (rawRef.current && renderedRef.current) {
+                                scrollSync.current.onScrollB(rawRef.current, renderedRef.current);
+                            }
+                        }}
+                        className="min-h-64 overflow-y-auto border-l border-border pl-4"
+                    >
+                        <MarkdownView
+                            content={content}
+                            sourceDir={sourceDir}
+                            onOpenIssue={onOpenIssue}
+                            onOpenDocument={onOpenDocument}
+                        />
+                    </div>
+                </div>
+            ) : mode === 'rendered' ? (
+                <MarkdownView
+                    content={content}
+                    sourceDir={sourceDir}
+                    onOpenIssue={onOpenIssue}
+                    onOpenDocument={onOpenDocument}
+                />
             ) : (
                 <Textarea
                     value={content}

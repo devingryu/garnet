@@ -296,6 +296,35 @@ func TestSetIssueAssignee_RestrictedToMembers(t *testing.T) {
 	}
 }
 
+func TestSetIssuePriority(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	issue, err := SetIssuePriority(root, "GRNT-1", "high")
+	if err != nil {
+		t.Fatalf("SetIssuePriority() returned error: %v", err)
+	}
+	if issue.Priority != "high" {
+		t.Errorf("expected priority 'high', got %q", issue.Priority)
+	}
+
+	// "" clears it back to unset — same as SetIssueAssignee's empty-email case.
+	issue, err = SetIssuePriority(root, "GRNT-1", "")
+	if err != nil {
+		t.Fatalf("SetIssuePriority('') returned error: %v", err)
+	}
+	if issue.Priority != "" {
+		t.Errorf("expected priority cleared, got %q", issue.Priority)
+	}
+}
+
+func TestSetIssuePriority_InvalidRejected(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	if _, err := SetIssuePriority(root, "GRNT-1", "urgent"); err == nil {
+		t.Fatal("expected an error for a priority outside the fixed scale, got nil")
+	}
+}
+
 func TestCreateProject_Success(t *testing.T) {
 	root := copyFixture(t, "valid")
 

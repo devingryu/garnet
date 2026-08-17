@@ -38,6 +38,30 @@ export function GetIdentity(arg1) {
   return window['go']['main']['App']['GetIdentity'](arg1);
 }
 
+export function GitCommit(arg1, arg2) {
+  return window['go']['main']['App']['GitCommit'](arg1, arg2);
+}
+
+export function GitPull(arg1) {
+  return window['go']['main']['App']['GitPull'](arg1);
+}
+
+export function GitPush(arg1) {
+  return window['go']['main']['App']['GitPush'](arg1);
+}
+
+export function GitStageAll(arg1) {
+  return window['go']['main']['App']['GitStageAll'](arg1);
+}
+
+export function GitStagePaths(arg1, arg2) {
+  return window['go']['main']['App']['GitStagePaths'](arg1, arg2);
+}
+
+export function GitStatus(arg1) {
+  return window['go']['main']['App']['GitStatus'](arg1);
+}
+
 export function OpenWorkspace(arg1) {
   return window['go']['main']['App']['OpenWorkspace'](arg1);
 }
@@ -72,6 +96,10 @@ export function SetIssueAssignee(arg1, arg2, arg3) {
 
 export function SetIssueParent(arg1, arg2, arg3) {
   return window['go']['main']['App']['SetIssueParent'](arg1, arg2, arg3);
+}
+
+export function SetIssuePriority(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetIssuePriority'](arg1, arg2, arg3);
 }
 
 export function SetIssueTitle(arg1, arg2, arg3) {

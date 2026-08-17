@@ -20,6 +20,18 @@ export function CreateProject(arg1:string,arg2:string,arg3:string):Promise<works
 
 export function GetIdentity(arg1:string):Promise<workspace.Identity>;
 
+export function GitCommit(arg1:string,arg2:string):Promise<void>;
+
+export function GitPull(arg1:string):Promise<void>;
+
+export function GitPush(arg1:string):Promise<void>;
+
+export function GitStageAll(arg1:string):Promise<void>;
+
+export function GitStagePaths(arg1:string,arg2:Array<string>):Promise<void>;
+
+export function GitStatus(arg1:string):Promise<workspace.GitStatus>;
+
 export function OpenWorkspace(arg1:string):Promise<workspace.Workspace>;
 
 export function ReadDocument(arg1:string,arg2:string):Promise<string>;
@@ -37,6 +49,8 @@ export function SetIdentity(arg1:string,arg2:string,arg3:string):Promise<void>;
 export function SetIssueAssignee(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
 
 export function SetIssueParent(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
+
+export function SetIssuePriority(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
 
 export function SetIssueTitle(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
 

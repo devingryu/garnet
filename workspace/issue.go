@@ -18,6 +18,16 @@ type Link struct {
 	Target string `yaml:"target" json:"target"`
 }
 
+// Priorities is the fixed, workspace-wide priority scale — unlike issue
+// types (which a project declares in project.md), priority isn't something
+// that varies meaningfully by project, so there is nothing to configure.
+// Order here is highest-first, the order a picker or a sort should use.
+var Priorities = []string{"highest", "high", "medium", "low", "lowest"}
+
+func isValidPriority(p string) bool {
+	return slices.Contains(Priorities, p)
+}
+
 // TimelineEntry is one append-only record in an issue's timeline. Fields not
 // relevant to a given Kind are simply empty — this is a single loose shape
 // covering both automatic status-change entries and manual notes, per
@@ -39,6 +49,7 @@ type issueMeta struct {
 	Title    string          `yaml:"title"`
 	Type     string          `yaml:"type"`
 	Status   string          `yaml:"status"`
+	Priority string          `yaml:"priority"`
 	Parent   string          `yaml:"parent"`
 	Reporter string          `yaml:"reporter"`
 	Assignee string          `yaml:"assignee"`
@@ -55,10 +66,14 @@ type Issue struct {
 	// ProjectKey is derived from ID (the part before the last "-"), not
 	// stored in .garnet.yaml — project keys never contain hyphens, so this
 	// split is unambiguous.
-	ProjectKey  string          `json:"projectKey"`
-	Title       string          `json:"title"`
-	Type        string          `json:"type"`
-	Status      string          `json:"status"`
+	ProjectKey string `json:"projectKey"`
+	Title      string `json:"title"`
+	Type       string `json:"type"`
+	Status     string `json:"status"`
+	// Priority is one of Priorities, or "" for unset — a fixed workspace-
+	// wide scale, not project-declared like Type (GARNET-14: priority
+	// doesn't vary meaningfully by project the way issue types do).
+	Priority    string          `json:"priority,omitempty"`
 	Parent      string          `json:"parent,omitempty"`
 	Reporter    string          `json:"reporter,omitempty"`
 	Assignee    string          `json:"assignee,omitempty"`
@@ -71,6 +86,13 @@ type Issue struct {
 	// Todos is parsed out of Description on every read, never stored — see
 	// TodoItem and GARNET-13.
 	Todos []TodoItem `json:"todos"`
+	// Children is the reverse of Parent: every issue naming this one as its
+	// parent. Derived by Open from the whole issue set, never stored (same
+	// reasoning as backlinks, ADR 0004 — a stored reverse link is one half
+	// of a pair that goes stale). Computing it needs every issue, so an
+	// Issue returned by a single-issue load or by a mutation has it empty;
+	// the frontend re-reads the workspace after every write anyway.
+	Children []string `json:"children"`
 }
 
 // projectKeyFromID returns the project key portion of an issue ID, e.g.
@@ -151,6 +173,7 @@ func loadIssue(dir, id string) (*Issue, error) {
 		Title:       meta.Title,
 		Type:        meta.Type,
 		Status:      meta.Status,
+		Priority:    meta.Priority,
 		Parent:      meta.Parent,
 		Reporter:    meta.Reporter,
 		Assignee:    meta.Assignee,
@@ -159,7 +182,26 @@ func loadIssue(dir, id string) (*Issue, error) {
 		Description: description,
 		Documents:   documents,
 		Todos:       parseTodos(description),
+		Children:    []string{},
 	}, nil
+}
+
+// assignChildren fills in each issue's Children from the others' Parent
+// fields. Issues arrive in the order Open scanned them (sorted by ID), so
+// each child list comes out in that same order without re-sorting.
+func assignChildren(issues []Issue) {
+	byParent := map[string][]string{}
+	for _, issue := range issues {
+		if issue.Parent == "" || issue.Parent == issue.ID {
+			continue // an issue parented to itself isn't its own child
+		}
+		byParent[issue.Parent] = append(byParent[issue.Parent], issue.ID)
+	}
+	for i := range issues {
+		if ids, ok := byParent[issues[i].ID]; ok {
+			issues[i].Children = ids
+		}
+	}
 }
 
 // nextIssueID scans issues/ for existing "<projectKey>-<n>" directories and
@@ -410,6 +452,25 @@ func SetIssueParent(root, issueID, parentID string) (*Issue, error) {
 		}
 	}
 	meta.Parent = parentID
+	if err := writeIssueMeta(dir, meta); err != nil {
+		return nil, err
+	}
+	return loadIssue(dir, issueID)
+}
+
+// SetIssuePriority sets an issue's priority. priority must be "" (unset) or
+// one of Priorities — this scale is fixed workspace-wide, not project-
+// declared, so there's no project to validate it against (GARNET-14).
+func SetIssuePriority(root, issueID, priority string) (*Issue, error) {
+	dir := filepath.Join(root, "issues", issueID)
+	meta, err := readIssueMeta(dir)
+	if err != nil {
+		return nil, err
+	}
+	if priority != "" && !isValidPriority(priority) {
+		return nil, errInvalidPriority(priority)
+	}
+	meta.Priority = priority
 	if err := writeIssueMeta(dir, meta); err != nil {
 		return nil, err
 	}

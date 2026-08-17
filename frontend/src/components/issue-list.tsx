@@ -1,5 +1,6 @@
 import {useTranslation} from 'react-i18next';
 import {memberName} from '@/lib/members';
+import {priorityLabel} from '@/lib/priorities';
 import type {Issue, Project} from '@/lib/model';
 
 export function IssueList({
@@ -30,6 +31,7 @@ export function IssueList({
                     <span className="font-medium">{issue.title || issue.id}</span>
                     <span className="ml-2 text-muted-foreground">
                         {issue.id} · {issue.type} · {issue.status || t('common.empty')}
+                        {issue.priority && <> · {priorityLabel(t, issue.priority)}</>}
                         {issue.assignee && <> · {memberName(project, issue.assignee)}</>}
                         {issue.parent && <> · {t('issues.childOf', {parent: issue.parent})}</>}
                         {issue.todos.length > 0 && (

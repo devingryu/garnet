@@ -74,6 +74,62 @@ export namespace workspace {
 	        this.path = source["path"];
 	    }
 	}
+	export class GitFileChange {
+	    path: string;
+	    status: string;
+	    origPath?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new GitFileChange(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.status = source["status"];
+	        this.origPath = source["origPath"];
+	    }
+	}
+	export class GitStatus {
+	    branch: string;
+	    hasUpstream: boolean;
+	    ahead: number;
+	    behind: number;
+	    staged: GitFileChange[];
+	    unstaged: GitFileChange[];
+	
+	    static createFrom(source: any = {}) {
+	        return new GitStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.branch = source["branch"];
+	        this.hasUpstream = source["hasUpstream"];
+	        this.ahead = source["ahead"];
+	        this.behind = source["behind"];
+	        this.staged = this.convertValues(source["staged"], GitFileChange);
+	        this.unstaged = this.convertValues(source["unstaged"], GitFileChange);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class Identity {
 	    name: string;
 	    email: string;
@@ -165,6 +221,7 @@ export namespace workspace {
 	    title: string;
 	    type: string;
 	    status: string;
+	    priority?: string;
 	    parent?: string;
 	    reporter?: string;
 	    assignee?: string;
@@ -173,6 +230,7 @@ export namespace workspace {
 	    description: string;
 	    documents: string[];
 	    todos: TodoItem[];
+	    children: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Issue(source);
@@ -185,6 +243,7 @@ export namespace workspace {
 	        this.title = source["title"];
 	        this.type = source["type"];
 	        this.status = source["status"];
+	        this.priority = source["priority"];
 	        this.parent = source["parent"];
 	        this.reporter = source["reporter"];
 	        this.assignee = source["assignee"];
@@ -193,6 +252,7 @@ export namespace workspace {
 	        this.description = source["description"];
 	        this.documents = source["documents"];
 	        this.todos = this.convertValues(source["todos"], TodoItem);
+	        this.children = source["children"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

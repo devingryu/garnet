@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {LayoutGrid, Plus, RotateCw} from 'lucide-react';
+import {GitBranch, LayoutGrid, Plus, RotateCw} from 'lucide-react';
 import {useTranslation} from 'react-i18next';
 import {cn} from '@/lib/utils';
 import {AppShell} from '@/components/app-shell';
@@ -23,6 +23,7 @@ import {IssueDetailPanel} from '@/components/issue-detail-panel';
 import {DocumentTree} from '@/components/document-tree';
 import {DocumentEditorPanel} from '@/components/document-editor-panel';
 import {NewDocumentDialog} from '@/components/new-document-dialog';
+import {GitPanel} from '@/components/git-panel';
 import {ProjectSettingsDialog} from '@/components/project-settings-dialog';
 import type {SettingsSection} from '@/components/project-settings-dialog';
 import {backlinksFor} from '@/lib/documents';
@@ -249,6 +250,19 @@ export function WorkspaceView() {
                 </button>
             )}
 
+            <button
+                onClick={() => focusTab({kind: 'git'})}
+                className={cn(
+                    'flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm',
+                    activeTabKey === 'git'
+                        ? 'bg-accent font-medium text-accent-foreground'
+                        : 'text-foreground/80 hover:bg-muted'
+                )}
+            >
+                <GitBranch className="size-3.5" />
+                {t('sidebar.git')}
+            </button>
+
             <div className="mt-3 mb-1 flex items-center justify-between px-2">
                 <span className="text-xs text-muted-foreground">{t('sidebar.documents')}</span>
                 <button
@@ -273,7 +287,9 @@ export function WorkspaceView() {
                           tab.projectKey)
                         : tab.kind === 'issue'
                           ? ws.issues.find((i) => i.id === tab.issueId)?.title || tab.issueId
-                          : tab.docPath,
+                          : tab.kind === 'document'
+                            ? tab.docPath
+                            : t('sidebar.git'),
             }))}
             activeKey={activeTabKey}
             onSelect={setActiveTabKey}
@@ -408,6 +424,8 @@ export function WorkspaceView() {
                         onOpenDocument={openDocument}
                     />
                 )}
+
+                {activeTab?.kind === 'git' && <GitPanel key={path} path={path} />}
 
                 {activeProject && (
                     <NewIssueDialog

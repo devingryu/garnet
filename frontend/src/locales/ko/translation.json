@@ -24,7 +24,8 @@
     "issues": "이슈",
     "documents": "문서",
     "newDocument": "새 문서",
-    "noDocuments": "아직 문서가 없습니다."
+    "noDocuments": "아직 문서가 없습니다.",
+    "git": "Git"
   },
   "tabs": {
     "close": "{{label}} 닫기"
@@ -44,9 +45,20 @@
     "status": "상태",
     "type": "유형",
     "assignee": "담당자",
+    "priority": "우선순위",
+    "unprioritized": "없음",
+    "priorityLevel": {
+      "highest": "최상",
+      "high": "높음",
+      "medium": "보통",
+      "low": "낮음",
+      "lowest": "최하"
+    },
     "unassigned": "담당자 없음",
     "parent": "상위 이슈",
     "parentPlaceholder": "이슈 검색…",
+    "children": "하위 이슈",
+    "noChildren": "아직 없습니다.",
     "links": "연결",
     "noLinks": "아직 없습니다.",
     "linkTargetPlaceholder": "연결할 이슈 검색…",
@@ -166,6 +178,38 @@
     "project_key_required": "프로젝트 키를 입력해야 합니다.",
     "project_key_invalid": "\"{{key}}\"는 영문자, 숫자, 밑줄(_)만 사용할 수 있습니다.",
     "project_name_required": "프로젝트 이름을 입력해야 합니다.",
-    "project_already_exists": "\"{{key}}\" 키의 프로젝트가 이미 존재합니다."
+    "project_already_exists": "\"{{key}}\" 키의 프로젝트가 이미 존재합니다.",
+    "invalid_priority": "\"{{priority}}\"은(는) 알 수 없는 우선순위입니다.",
+    "not_a_git_repo": "이 워크스페이스는 아직 git 저장소가 아닙니다.",
+    "git_no_upstream": "현재 브랜치에 push/pull할 upstream이 설정되어 있지 않습니다.",
+    "commit_message_required": "커밋 메시지를 입력해야 합니다."
+  },
+  "markdownView": {
+    "raw": "원문",
+    "rendered": "미리보기",
+    "split": "분할"
+  },
+  "git": {
+    "loading": "불러오는 중…",
+    "heading": "Git",
+    "aheadBehind": "{{ahead}} 앞섬, {{behind}} 뒤처짐",
+    "unstaged": "스테이징 안 됨",
+    "staged": "스테이징됨",
+    "noChanges": "없음.",
+    "stageAll": "전체 스테이징",
+    "stageSelected": "선택 항목 스테이징",
+    "commitPlaceholder": "커밋 메시지…",
+    "commit": "커밋",
+    "push": "Push",
+    "pull": "Pull",
+    "status": {
+      "added": "추가됨",
+      "modified": "수정됨",
+      "deleted": "삭제됨",
+      "renamed": "이름 변경됨",
+      "copied": "복사됨",
+      "conflicted": "충돌",
+      "untracked": "추적 안 됨"
+    }
   }
 }

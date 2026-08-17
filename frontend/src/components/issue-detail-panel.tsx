@@ -14,15 +14,20 @@ import {
 } from '@/components/ui/select';
 import {BacklinkList} from '@/components/backlink-list';
 import {IssuePicker} from '@/components/issue-picker';
+import {MarkdownView} from '@/components/markdown-view';
+import {MarkdownViewToggle, type MarkdownViewMode} from '@/components/markdown-view-toggle';
 import {allowedNextStatuses} from '@/lib/workflow';
 import {LINK_TYPES, linkTypeLabel} from '@/lib/links';
+import {PRIORITIES, priorityLabel} from '@/lib/priorities';
 import {memberName} from '@/lib/members';
 import {formatTimestamp} from '@/lib/format';
+import {createScrollSync} from '@/lib/scroll-sync';
 import {
     AddIssueLink,
     AddTimelineNote,
     SetIssueAssignee,
     SetIssueParent,
+    SetIssuePriority,
     SetIssueTitle,
     ToggleTodo,
     TransitionIssueStatus,
@@ -32,6 +37,7 @@ import type {Backlink, Issue, Project} from '@/lib/model';
 
 const UNASSIGNED = '__unassigned__';
 const ADD_MEMBER = '__add_member__';
+const UNPRIORITIZED = '__unprioritized__';
 
 function Field({label, children}: {label: string; children: ReactNode}) {
     return (
@@ -82,6 +88,12 @@ export function IssueDetailPanel({
     const [linkType, setLinkType] = useState<string>(LINK_TYPES[0]);
     const [linkTarget, setLinkTarget] = useState('');
     const [noteBody, setNoteBody] = useState('');
+    const [descriptionMode, setDescriptionMode] = useState<MarkdownViewMode>('raw');
+
+    const descriptionSourceDir = `issues/${issue.id}`;
+    const rawRef = useRef<HTMLTextAreaElement>(null);
+    const renderedRef = useRef<HTMLDivElement>(null);
+    const scrollSync = useRef(createScrollSync());
 
     // See the doc comment above: follows issue.description when nothing
     // local is unsaved, so a todo toggle's write doesn't get reverted by a
@@ -122,6 +134,11 @@ export function IssueDetailPanel({
 
     const linkTypeItems = LINK_TYPES.map((type) => ({value: type, label: linkTypeLabel(t, type)}));
 
+    const priorityItems = [
+        {value: UNPRIORITIZED, label: t('issue.unprioritized')},
+        ...PRIORITIES.map((p) => ({value: p, label: priorityLabel(t, p)})),
+    ];
+
     return (
         <div className="flex flex-col gap-4">
             <div className="grid grid-cols-[1fr_200px] gap-6">
@@ -138,16 +155,72 @@ export function IssueDetailPanel({
                         placeholder={t('issue.titlePlaceholder')}
                         className="border-none bg-transparent px-0 text-lg font-semibold shadow-none focus-visible:ring-0"
                     />
-                    <Textarea
-                        value={body}
-                        onChange={(e) => setBody(e.target.value)}
-                        onBlur={() => {
-                            if (body === issue.description) return;
-                            void mutate((path) => UpdateIssueBody(path, issue.id, body));
-                        }}
-                        placeholder={t('issue.descriptionPlaceholder')}
-                        className="min-h-64 resize-none border-none bg-transparent px-0 text-base leading-relaxed shadow-none focus-visible:ring-0"
-                    />
+                    <div className="flex justify-end">
+                        <MarkdownViewToggle mode={descriptionMode} onChange={setDescriptionMode} />
+                    </div>
+
+                    {descriptionMode === 'split' ? (
+                        <div className="grid min-h-64 grid-cols-2 gap-4">
+                            <Textarea
+                                ref={rawRef}
+                                value={body}
+                                onChange={(e) => setBody(e.target.value)}
+                                onBlur={() => {
+                                    if (body === issue.description) return;
+                                    void mutate((path) => UpdateIssueBody(path, issue.id, body));
+                                }}
+                                onScroll={() => {
+                                    if (rawRef.current && renderedRef.current) {
+                                        scrollSync.current.onScrollA(
+                                            rawRef.current,
+                                            renderedRef.current
+                                        );
+                                    }
+                                }}
+                                placeholder={t('issue.descriptionPlaceholder')}
+                                className="min-h-64 resize-none overflow-y-auto border-none bg-transparent px-0 text-base leading-relaxed shadow-none focus-visible:ring-0"
+                            />
+                            <div
+                                ref={renderedRef}
+                                onScroll={() => {
+                                    if (rawRef.current && renderedRef.current) {
+                                        scrollSync.current.onScrollB(
+                                            rawRef.current,
+                                            renderedRef.current
+                                        );
+                                    }
+                                }}
+                                className="min-h-64 overflow-y-auto border-l border-border pl-4"
+                            >
+                                <MarkdownView
+                                    content={body}
+                                    sourceDir={descriptionSourceDir}
+                                    onOpenIssue={onOpenIssue}
+                                    onOpenDocument={onOpenDocument}
+                                    hideTaskCheckboxes
+                                />
+                            </div>
+                        </div>
+                    ) : descriptionMode === 'rendered' ? (
+                        <MarkdownView
+                            content={body}
+                            sourceDir={descriptionSourceDir}
+                            onOpenIssue={onOpenIssue}
+                            onOpenDocument={onOpenDocument}
+                            hideTaskCheckboxes
+                        />
+                    ) : (
+                        <Textarea
+                            value={body}
+                            onChange={(e) => setBody(e.target.value)}
+                            onBlur={() => {
+                                if (body === issue.description) return;
+                                void mutate((path) => UpdateIssueBody(path, issue.id, body));
+                            }}
+                            placeholder={t('issue.descriptionPlaceholder')}
+                            className="min-h-64 resize-none border-none bg-transparent px-0 text-base leading-relaxed shadow-none focus-visible:ring-0"
+                        />
+                    )}
 
                     {issue.todos.length > 0 && (
                         <div className="flex flex-col gap-1.5 border-t border-border pt-3">
@@ -279,6 +352,35 @@ export function IssueDetailPanel({
                         )}
                     </Field>
 
+                    <Field label={t('issue.priority')}>
+                        <Select
+                            items={priorityItems}
+                            value={issue.priority || UNPRIORITIZED}
+                            onValueChange={(v) => {
+                                if (v == null) return;
+                                const choice = String(v);
+                                const priority = choice === UNPRIORITIZED ? '' : choice;
+                                if (priority === (issue.priority ?? '')) return;
+                                void mutate((path) => SetIssuePriority(path, issue.id, priority));
+                            }}
+                        >
+                            <SelectTrigger size="sm" className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {priorityItems.map((item) => (
+                                    <SelectItem
+                                        key={item.value}
+                                        value={item.value}
+                                        label={item.label}
+                                    >
+                                        {item.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </Field>
+
                     <Field label={t('issue.parent')}>
                         <IssuePicker
                             issues={issues}
@@ -291,6 +393,35 @@ export function IssueDetailPanel({
                             }}
                             placeholder={t('issue.parentPlaceholder')}
                         />
+                    </Field>
+
+                    {/* Children is the reverse of Parent, derived by the
+                        backend from every issue's parent field — read-only
+                        here, since the way to add one is to set that child's
+                        Parent above. */}
+                    <Field label={t('issue.children')}>
+                        <div className="flex flex-col gap-1">
+                            {issue.children.map((id) => {
+                                // Title is workspace data, shown as authored
+                                // (rule 11); the ID alone is the fallback for
+                                // a child that somehow isn't in the list.
+                                const title = issues.find((i) => i.id === id)?.title;
+                                return (
+                                    <button
+                                        key={id}
+                                        onClick={() => onOpenIssue(id)}
+                                        className="text-left text-sm text-primary hover:underline"
+                                    >
+                                        {title ? `${id} · ${title}` : id}
+                                    </button>
+                                );
+                            })}
+                            {issue.children.length === 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                    {t('issue.noChildren')}
+                                </p>
+                            )}
+                        </div>
                     </Field>
 
                     <Field label={t('issue.links')}>

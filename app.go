@@ -123,6 +123,11 @@ func (a *App) AddIssueLink(path, issueID, linkType, target string) (*workspace.I
 	return coded(workspace.AddIssueLink(path, issueID, linkType, target))
 }
 
+// SetIssuePriority sets an issue's priority.
+func (a *App) SetIssuePriority(path, issueID, priority string) (*workspace.Issue, error) {
+	return coded(workspace.SetIssuePriority(path, issueID, priority))
+}
+
 // CreateProject declares a new project at projects/<key>/project.md.
 func (a *App) CreateProject(path, key, name string) (*workspace.Project, error) {
 	return coded(workspace.CreateProject(path, key, name))
@@ -184,4 +189,34 @@ func (a *App) RemoveProjectRepo(path, projectKey, repoPath string) (*workspace.P
 // skipping ones already present.
 func (a *App) CloneProjectRepos(path, projectKey string) (*workspace.CloneResult, error) {
 	return coded(workspace.CloneProjectRepos(path, projectKey))
+}
+
+// GitStatus reports the workspace tree's git status.
+func (a *App) GitStatus(path string) (*workspace.GitStatus, error) {
+	return coded(workspace.GetGitStatus(path))
+}
+
+// GitStageAll stages every change in the workspace tree.
+func (a *App) GitStageAll(path string) error {
+	return codedOnly(workspace.StageAll(path))
+}
+
+// GitStagePaths stages exactly the given workspace-root-relative paths.
+func (a *App) GitStagePaths(path string, paths []string) error {
+	return codedOnly(workspace.StagePaths(path, paths))
+}
+
+// GitCommit commits whatever is currently staged.
+func (a *App) GitCommit(path, message string) error {
+	return codedOnly(workspace.CommitStaged(path, message))
+}
+
+// GitPush pushes the current branch to its upstream.
+func (a *App) GitPush(path string) error {
+	return codedOnly(workspace.PushRepo(path))
+}
+
+// GitPull fast-forwards the current branch from its upstream.
+func (a *App) GitPull(path string) error {
+	return codedOnly(workspace.PullRepo(path))
 }

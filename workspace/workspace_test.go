@@ -3,6 +3,9 @@ package workspace
 import (
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -88,9 +91,49 @@ func TestOpen_NoNullSlicesInJSON(t *testing.T) {
 		`"warnings":null`, `"projects":null`, `"issues":null`,
 		`"repos":null`, `"issueTypes":null`,
 		`"links":null`, `"timeline":null`, `"documents":null`,
+		`"children":null`,
 	} {
 		if strings.Contains(body, field) {
 			t.Errorf("found %q in marshaled JSON — this field must default to [], not nil: %s", field, body)
+		}
+	}
+}
+
+// TestOpen_Children covers the reverse of Parent, which is derived from the
+// whole issue set rather than read off any one issue's .garnet.yaml.
+func TestOpen_Children(t *testing.T) {
+	root := copyFixture(t, "valid")
+	writeChildIssue := func(id, parent string) {
+		t.Helper()
+		dir := filepath.Join(root, "issues", id)
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("creating %s: %v", id, err)
+		}
+		meta := "title: " + id + "\ntype: task\nstatus: todo\nparent: " + parent + "\n"
+		if err := os.WriteFile(filepath.Join(dir, ".garnet.yaml"), []byte(meta), 0o644); err != nil {
+			t.Fatalf("writing %s: %v", id, err)
+		}
+	}
+	writeChildIssue("GRNT-3", "GRNT-1")
+	writeChildIssue("GRNT-4", "GRNT-1")
+	// Parented to itself: a cycle of one, which must not make it its own child.
+	writeChildIssue("GRNT-5", "GRNT-5")
+
+	ws, err := Open(root)
+	if err != nil {
+		t.Fatalf("Open() returned error: %v", err)
+	}
+
+	byID := map[string][]string{}
+	for _, issue := range ws.Issues {
+		byID[issue.ID] = issue.Children
+	}
+	if got := byID["GRNT-1"]; !slices.Equal(got, []string{"GRNT-3", "GRNT-4"}) {
+		t.Errorf("expected GRNT-1's children to be [GRNT-3 GRNT-4], got %+v", got)
+	}
+	for _, id := range []string{"GRNT-3", "GRNT-4", "GRNT-5"} {
+		if got := byID[id]; len(got) != 0 {
+			t.Errorf("expected %s to have no children, got %+v", id, got)
 		}
 	}
 }

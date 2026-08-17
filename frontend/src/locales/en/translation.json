@@ -25,7 +25,8 @@
     "issues": "Issues",
     "documents": "Documents",
     "newDocument": "New document",
-    "noDocuments": "No documents yet."
+    "noDocuments": "No documents yet.",
+    "git": "Git"
   },
   "tabs": {
     "close": "Close {{label}}"
@@ -45,9 +46,20 @@
     "status": "Status",
     "type": "Type",
     "assignee": "Assignee",
+    "priority": "Priority",
+    "unprioritized": "None",
+    "priorityLevel": {
+      "highest": "Highest",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "lowest": "Lowest"
+    },
     "unassigned": "Unassigned",
     "parent": "Parent",
     "parentPlaceholder": "Search issues…",
+    "children": "Children",
+    "noChildren": "None yet.",
     "links": "Links",
     "noLinks": "None yet.",
     "linkTargetPlaceholder": "Search issues to link…",
@@ -167,6 +179,38 @@
     "project_key_required": "A project key is required.",
     "project_key_invalid": "\"{{key}}\" can only contain letters, digits, and underscores.",
     "project_name_required": "A project name is required.",
-    "project_already_exists": "A project already exists at \"{{key}}\"."
+    "project_already_exists": "A project already exists at \"{{key}}\".",
+    "invalid_priority": "\"{{priority}}\" isn't a recognized priority.",
+    "not_a_git_repo": "This workspace isn't a git repository yet.",
+    "git_no_upstream": "The current branch has no upstream configured to push or pull against.",
+    "commit_message_required": "A commit message is required."
+  },
+  "markdownView": {
+    "raw": "Raw",
+    "rendered": "Rendered",
+    "split": "Split"
+  },
+  "git": {
+    "loading": "Loading…",
+    "heading": "Git",
+    "aheadBehind": "{{ahead}} ahead, {{behind}} behind",
+    "unstaged": "Unstaged",
+    "staged": "Staged",
+    "noChanges": "None.",
+    "stageAll": "Stage all",
+    "stageSelected": "Stage selected",
+    "commitPlaceholder": "Commit message…",
+    "commit": "Commit",
+    "push": "Push",
+    "pull": "Pull",
+    "status": {
+      "added": "added",
+      "modified": "modified",
+      "deleted": "deleted",
+      "renamed": "renamed",
+      "copied": "copied",
+      "conflicted": "conflicted",
+      "untracked": "untracked"
+    }
   }
 }

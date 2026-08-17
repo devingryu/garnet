@@ -3,7 +3,8 @@ export type IssuesView = 'board' | 'list';
 export type Tab =
     | {kind: 'issues'; projectKey: string; view: IssuesView}
     | {kind: 'issue'; issueId: string}
-    | {kind: 'document'; docPath: string};
+    | {kind: 'document'; docPath: string}
+    | {kind: 'git'};
 
 export function tabKey(tab: Tab): string {
     switch (tab.kind) {
@@ -13,6 +14,8 @@ export function tabKey(tab: Tab): string {
             return `issue:${tab.issueId}`;
         case 'document':
             return `document:${tab.docPath}`;
+        case 'git':
+            return 'git';
     }
 }
 

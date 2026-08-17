@@ -16,31 +16,35 @@ import (
 // raw text as detail — inventing a code for every os.ReadFile failure would
 // be a translation catalog nobody can maintain.
 const (
-	CodeNotAWorkspace        = "not_a_workspace"
-	CodeIssueNotFound        = "issue_not_found"
-	CodeProjectLoadFailed    = "project_load_failed"
-	CodeTitleRequired        = "title_required"
-	CodeNoteBodyRequired     = "note_body_required"
-	CodeIdentityRequired     = "identity_required"
-	CodeIssueTypeNotDeclared = "issue_type_not_declared"
-	CodeStatusNotDeclared    = "status_not_declared"
-	CodeInvalidTransition    = "invalid_transition"
-	CodeNotAProjectMember    = "not_a_project_member"
-	CodeMemberAlreadyExists  = "member_already_exists"
-	CodeParentNotFound       = "parent_not_found"
-	CodeLinkTargetNotFound   = "link_target_not_found"
-	CodeTransitionUnknown    = "transition_unknown_status"
-	CodeRepoPathTaken        = "repo_path_taken"
-	CodeRepoNotDeclared      = "repo_not_declared"
-	CodeDocumentPathInvalid  = "document_path_invalid"
-	CodeDocumentNotMarkdown  = "document_not_markdown"
-	CodeDocumentPathReserved = "document_path_reserved"
-	CodeDocumentUnreadable   = "document_unreadable"
-	CodeTodoNotFound         = "todo_not_found"
-	CodeProjectKeyRequired   = "project_key_required"
-	CodeProjectKeyInvalid    = "project_key_invalid"
-	CodeProjectNameRequired  = "project_name_required"
-	CodeProjectAlreadyExists = "project_already_exists"
+	CodeNotAWorkspace         = "not_a_workspace"
+	CodeIssueNotFound         = "issue_not_found"
+	CodeProjectLoadFailed     = "project_load_failed"
+	CodeTitleRequired         = "title_required"
+	CodeNoteBodyRequired      = "note_body_required"
+	CodeIdentityRequired      = "identity_required"
+	CodeIssueTypeNotDeclared  = "issue_type_not_declared"
+	CodeStatusNotDeclared     = "status_not_declared"
+	CodeInvalidTransition     = "invalid_transition"
+	CodeNotAProjectMember     = "not_a_project_member"
+	CodeMemberAlreadyExists   = "member_already_exists"
+	CodeParentNotFound        = "parent_not_found"
+	CodeLinkTargetNotFound    = "link_target_not_found"
+	CodeTransitionUnknown     = "transition_unknown_status"
+	CodeRepoPathTaken         = "repo_path_taken"
+	CodeRepoNotDeclared       = "repo_not_declared"
+	CodeDocumentPathInvalid   = "document_path_invalid"
+	CodeDocumentNotMarkdown   = "document_not_markdown"
+	CodeDocumentPathReserved  = "document_path_reserved"
+	CodeDocumentUnreadable    = "document_unreadable"
+	CodeTodoNotFound          = "todo_not_found"
+	CodeProjectKeyRequired    = "project_key_required"
+	CodeProjectKeyInvalid     = "project_key_invalid"
+	CodeProjectNameRequired   = "project_name_required"
+	CodeProjectAlreadyExists  = "project_already_exists"
+	CodeInvalidPriority       = "invalid_priority"
+	CodeNotAGitRepo           = "not_a_git_repo"
+	CodeGitNoUpstream         = "git_no_upstream"
+	CodeCommitMessageRequired = "commit_message_required"
 )
 
 // CodedError is a failure the UI is expected to show to a person. Code says
@@ -288,4 +292,30 @@ func errProjectAlreadyExists(key string) error {
 		Params:  map[string]string{"key": key},
 		Message: fmt.Sprintf("a project already exists at key %q", key),
 	}
+}
+
+func errInvalidPriority(priority string) error {
+	return &CodedError{
+		Code:    CodeInvalidPriority,
+		Params:  map[string]string{"priority": priority},
+		Message: fmt.Sprintf("%q is not a recognized priority", priority),
+	}
+}
+
+func errNotAGitRepo() error {
+	return &CodedError{
+		Code:    CodeNotAGitRepo,
+		Message: "this workspace isn't a git repository",
+	}
+}
+
+func errGitNoUpstream() error {
+	return &CodedError{
+		Code:    CodeGitNoUpstream,
+		Message: "the current branch has no upstream configured to push or pull against",
+	}
+}
+
+func errCommitMessageRequired() error {
+	return &CodedError{Code: CodeCommitMessageRequired, Message: "a commit message is required"}
 }

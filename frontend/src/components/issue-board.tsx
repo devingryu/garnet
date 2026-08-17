@@ -3,6 +3,7 @@ import type {MouseEvent as ReactMouseEvent} from 'react';
 import {useTranslation} from 'react-i18next';
 import {cn} from '@/lib/utils';
 import {allowedNextStatuses} from '@/lib/workflow';
+import {priorityLabel} from '@/lib/priorities';
 import type {Issue, Project} from '@/lib/model';
 
 interface DragState {
@@ -132,6 +133,9 @@ export function IssueBoard({
                                     <p className="font-medium">{issue.title || issue.id}</p>
                                     <p className="mt-0.5 text-xs text-muted-foreground">
                                         {issue.id} · {issue.type}
+                                        {issue.priority && (
+                                            <> · {priorityLabel(t, issue.priority)}</>
+                                        )}
                                         {issue.todos.length > 0 && (
                                             <>
                                                 {' · '}

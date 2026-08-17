@@ -85,6 +85,7 @@ func Open(root string) (*Workspace, error) {
 			}
 			ws.Issues = append(ws.Issues, *i)
 		}
+		assignChildren(ws.Issues)
 	}
 
 	documents, err := ListDocuments(root)
