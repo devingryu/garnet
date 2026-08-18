@@ -406,6 +406,7 @@ export function WorkspaceView() {
                                 setSelectedProjectKey(openedIssue.projectKey);
                                 openSettings('members');
                             }}
+                            onDeleted={() => handleCloseTab(tabKey(issueTab))}
                         />
                     ) : (
                         <p className="text-sm text-muted-foreground">{t('issues.notFound')}</p>
@@ -422,6 +423,7 @@ export function WorkspaceView() {
                         }
                         onOpenIssue={openIssue}
                         onOpenDocument={openDocument}
+                        onDeleted={() => handleCloseTab(tabKey(documentTab))}
                     />
                 )}
 

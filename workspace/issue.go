@@ -285,6 +285,24 @@ func CreateIssue(root, projectKey, issueType, title string) (*Issue, error) {
 	return loadIssue(dir, id)
 }
 
+// DeleteIssue removes an issue's directory entirely. Hard delete, no
+// archive step (GARNET-4) — `rm -rf` already works on an issue directory
+// from outside the app, so the app's own delete doesn't need to be safer
+// than that. Other issues that named this one as Parent or a Link target
+// are left as dangling references rather than blocked or cleaned up: the
+// same tolerance Open already has for a malformed/missing reference
+// (ADR 0001), not a new behavior invented for delete.
+func DeleteIssue(root, issueID string) error {
+	dir := filepath.Join(root, "issues", issueID)
+	if _, err := readIssueMeta(dir); err != nil {
+		return err
+	}
+	if err := os.RemoveAll(dir); err != nil {
+		return fmt.Errorf("deleting issue directory: %w", err)
+	}
+	return nil
+}
+
 // UpdateIssueBody overwrites issue.md for the given issue.
 func UpdateIssueBody(root, issueID, body string) error {
 	dir := filepath.Join(root, "issues", issueID)

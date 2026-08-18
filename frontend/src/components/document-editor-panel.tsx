@@ -1,10 +1,12 @@
 import {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Textarea} from '@/components/ui/textarea';
+import {Button} from '@/components/ui/button';
 import {BacklinkList} from '@/components/backlink-list';
 import {MarkdownView} from '@/components/markdown-view';
 import {MarkdownViewToggle, type MarkdownViewMode} from '@/components/markdown-view-toggle';
-import {ReadDocument} from '../../wailsjs/go/main/App';
+import {ConfirmDeleteDialog} from '@/components/confirm-delete-dialog';
+import {DeleteDocument, ReadDocument} from '../../wailsjs/go/main/App';
 import {useAsyncAction} from '@/lib/use-async-action';
 import {createScrollSync} from '@/lib/scroll-sync';
 import type {Backlink} from '@/lib/model';
@@ -16,6 +18,7 @@ export function DocumentEditorPanel({
     onSave,
     onOpenIssue,
     onOpenDocument,
+    onDeleted,
 }: {
     path: string;
     docPath: string;
@@ -24,15 +27,19 @@ export function DocumentEditorPanel({
     onSave: (content: string) => Promise<boolean>;
     onOpenIssue: (id: string) => void;
     onOpenDocument: (path: string) => void;
+    /** Runs after DeleteDocument succeeds — closes this document's tab and
+     *  reloads the workspace (GARNET-4). */
+    onDeleted: () => void;
 }) {
     const {t} = useTranslation();
-    const {run, error} = useAsyncAction();
+    const {run, error, pending} = useAsyncAction();
     const [content, setContent] = useState('');
     // What the last successful read or write put on disk — the baseline that
     // decides whether a blur has anything to save. null until the first read
     // lands, which is also the loading flag.
     const [onDisk, setOnDisk] = useState<string | null>(null);
     const [mode, setMode] = useState<MarkdownViewMode>('raw');
+    const [deleteOpen, setDeleteOpen] = useState(false);
 
     // docPath is workspace-root-relative (e.g. "decisions/0001-x.md"); a
     // link in it resolves against its own directory, same as sourceDir for
@@ -127,6 +134,28 @@ export function DocumentEditorPanel({
                     onOpenDocument={onOpenDocument}
                 />
             </div>
+
+            <div className="mt-2 border-t border-border pt-3">
+                <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                    {t('document.deleteDocument')}
+                </Button>
+            </div>
+
+            <ConfirmDeleteDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                title={t('document.deleteConfirmTitle')}
+                description={t('document.deleteConfirmBody')}
+                pending={pending}
+                onConfirm={() =>
+                    void run(() => DeleteDocument(path, docPath)).then((r) => {
+                        if (r.ok) {
+                            setDeleteOpen(false);
+                            onDeleted();
+                        }
+                    })
+                }
+            />
         </div>
     );
 }

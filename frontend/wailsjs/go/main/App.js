@@ -34,6 +34,14 @@ export function CreateProject(arg1, arg2, arg3) {
   return window['go']['main']['App']['CreateProject'](arg1, arg2, arg3);
 }
 
+export function DeleteDocument(arg1, arg2) {
+  return window['go']['main']['App']['DeleteDocument'](arg1, arg2);
+}
+
+export function DeleteIssue(arg1, arg2) {
+  return window['go']['main']['App']['DeleteIssue'](arg1, arg2);
+}
+
 export function GetIdentity(arg1) {
   return window['go']['main']['App']['GetIdentity'](arg1);
 }

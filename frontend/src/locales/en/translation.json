@@ -7,6 +7,9 @@
   "common": {
     "close": "Close",
     "add": "Add",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting…",
     "remove": "Remove {{name}}",
     "empty": "—"
   },
@@ -81,7 +84,10 @@
       "heading": "Todos",
       "hint": "Parsed from \"- [ ]\" lines in the description above — check one to update the file directly.",
       "count": "{{done}}/{{total}}"
-    }
+    },
+    "deleteIssue": "Delete issue",
+    "deleteConfirmTitle": "Delete this issue?",
+    "deleteConfirmBody": "This deletes the issue's directory permanently — git history is the only undo."
   },
   "member": {
     "name": "Name",
@@ -95,7 +101,10 @@
     "issue": "Issue {{id}}"
   },
   "document": {
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "deleteDocument": "Delete document",
+    "deleteConfirmTitle": "Delete this document?",
+    "deleteConfirmBody": "This deletes the file permanently — git history is the only undo."
   },
   "project": {
     "new": "New project",
@@ -183,7 +192,8 @@
     "invalid_priority": "\"{{priority}}\" isn't a recognized priority.",
     "not_a_git_repo": "This workspace isn't a git repository yet.",
     "git_no_upstream": "The current branch has no upstream configured to push or pull against.",
-    "commit_message_required": "A commit message is required."
+    "commit_message_required": "A commit message is required.",
+    "document_not_found": "That document no longer exists."
   },
   "markdownView": {
     "raw": "Raw",

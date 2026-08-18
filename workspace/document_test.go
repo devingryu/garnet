@@ -77,6 +77,31 @@ func TestWriteDocument_RejectsNonMarkdown(t *testing.T) {
 	}
 }
 
+func TestDeleteDocument(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	if err := DeleteDocument(root, "decisions/0001-test-decision.md"); err != nil {
+		t.Fatalf("DeleteDocument() returned error: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "decisions", "0001-test-decision.md")); !os.IsNotExist(err) {
+		t.Errorf("expected the document to be gone, stat returned: %v", err)
+	}
+}
+
+func TestDeleteDocument_NotFound(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if err := DeleteDocument(root, "decisions/does-not-exist.md"); err == nil {
+		t.Fatal("expected an error for a nonexistent document, got nil")
+	}
+}
+
+func TestDeleteDocument_RejectsReservedDirs(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if err := DeleteDocument(root, "issues/GRNT-1/issue.md"); err == nil {
+		t.Fatal("expected an error deleting under a reserved directory, got nil")
+	}
+}
+
 func TestReadDocument_NotFound(t *testing.T) {
 	root := copyFixture(t, "valid")
 	if _, err := ReadDocument(root, "decisions/does-not-exist.md"); err == nil {

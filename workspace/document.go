@@ -115,3 +115,21 @@ func WriteDocument(root, relPath, content string) error {
 	}
 	return writeFile(abs, []byte(content))
 }
+
+// DeleteDocument removes a document file. Hard delete, same reasoning as
+// DeleteIssue (GARNET-4): a link elsewhere pointing at relPath is left
+// dangling rather than blocked or rewritten, the same tolerance Open
+// already has for any other unresolved reference.
+func DeleteDocument(root, relPath string) error {
+	abs, err := resolveDocumentPath(root, relPath)
+	if err != nil {
+		return err
+	}
+	if err := os.Remove(abs); err != nil {
+		if os.IsNotExist(err) {
+			return errDocumentNotFound(relPath)
+		}
+		return fmt.Errorf("deleting document: %w", err)
+	}
+	return nil
+}

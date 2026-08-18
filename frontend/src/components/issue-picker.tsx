@@ -59,7 +59,16 @@ export function IssuePicker({
             onValueChange={(item) => onValueChange(item?.value ?? '')}
         >
             <ComboboxInput placeholder={placeholder} showClear />
-            <ComboboxContent>
+            {/* ComboboxContent defaults to exactly the anchor's width
+                (GARNET-25) — fine for a full-width field, but this picker
+                sits in issue-detail-panel.tsx's ~200px metadata column,
+                which clamps "GARNET-3 — Add in-app project creation"-length
+                labels to unreadable. Widen it independent of the anchor,
+                capped by the popup's own available-space var so it still
+                fits on screen. IssuePicker is the only Combobox caller in
+                the app, so this doesn't touch combobox.tsx's shared
+                default for anyone else. */}
+            <ComboboxContent className="w-[min(24rem,var(--available-width))]">
                 <ComboboxEmpty>{t('issue.pickerEmpty')}</ComboboxEmpty>
                 <ComboboxList>
                     {(item) => (

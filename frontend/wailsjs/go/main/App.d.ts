@@ -18,6 +18,10 @@ export function CreateIssue(arg1:string,arg2:string,arg3:string,arg4:string):Pro
 
 export function CreateProject(arg1:string,arg2:string,arg3:string):Promise<workspace.Project>;
 
+export function DeleteDocument(arg1:string,arg2:string):Promise<void>;
+
+export function DeleteIssue(arg1:string,arg2:string):Promise<void>;
+
 export function GetIdentity(arg1:string):Promise<workspace.Identity>;
 
 export function GitCommit(arg1:string,arg2:string):Promise<void>;

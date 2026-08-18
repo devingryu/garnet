@@ -16,15 +16,20 @@ import {BacklinkList} from '@/components/backlink-list';
 import {IssuePicker} from '@/components/issue-picker';
 import {MarkdownView} from '@/components/markdown-view';
 import {MarkdownViewToggle, type MarkdownViewMode} from '@/components/markdown-view-toggle';
+import {ConfirmDeleteDialog} from '@/components/confirm-delete-dialog';
 import {allowedNextStatuses} from '@/lib/workflow';
 import {LINK_TYPES, linkTypeLabel} from '@/lib/links';
 import {PRIORITIES, priorityLabel} from '@/lib/priorities';
 import {memberName} from '@/lib/members';
 import {formatTimestamp} from '@/lib/format';
 import {createScrollSync} from '@/lib/scroll-sync';
+import {statusCategoryClass} from '@/lib/status-style';
+import {issueTypeIcon} from '@/lib/issue-type-icon';
+import {cn} from '@/lib/utils';
 import {
     AddIssueLink,
     AddTimelineNote,
+    DeleteIssue,
     SetIssueAssignee,
     SetIssueParent,
     SetIssuePriority,
@@ -69,6 +74,7 @@ export function IssueDetailPanel({
     onOpenDocument,
     onOpenIssue,
     onRequestAddMember,
+    onDeleted,
 }: {
     issue: Issue;
     /** The whole workspace's issues, for the Parent/Links pickers to search over. */
@@ -80,10 +86,15 @@ export function IssueDetailPanel({
     onOpenDocument: (path: string) => void;
     onOpenIssue: (id: string) => void;
     onRequestAddMember: () => void;
+    /** Runs after DeleteIssue succeeds — closes this issue's tab (GARNET-4).
+     *  The workspace reload itself already happens inside `mutate`. */
+    onDeleted: () => void;
 }) {
     const {t, i18n} = useTranslation();
     const [title, setTitle] = useState(issue.title);
     const [body, setBody] = useState(issue.description);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [parent, setParent] = useState(issue.parent ?? '');
     const [linkType, setLinkType] = useState<string>(LINK_TYPES[0]);
     const [linkTarget, setLinkTarget] = useState('');
@@ -138,6 +149,8 @@ export function IssueDetailPanel({
         {value: UNPRIORITIZED, label: t('issue.unprioritized')},
         ...PRIORITIES.map((p) => ({value: p, label: priorityLabel(t, p)})),
     ];
+
+    const TypeIcon = issueTypeIcon(issue.type);
 
     return (
         <div className="flex flex-col gap-4">
@@ -283,7 +296,18 @@ export function IssueDetailPanel({
                                     );
                                 }}
                             >
-                                <SelectTrigger size="sm" className="w-full">
+                                {/* Colored by workflow.md's category (open/
+                                    active/closed), not by the status id
+                                    itself — a Jira-style at-a-glance cue
+                                    the plain text-only trigger didn't have
+                                    (GARNET-27). */}
+                                <SelectTrigger
+                                    size="sm"
+                                    className={cn(
+                                        'w-full border-transparent font-medium',
+                                        statusCategoryClass(currentStatusOption?.category ?? '')
+                                    )}
+                                >
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -302,7 +326,16 @@ export function IssueDetailPanel({
                     </Field>
 
                     <Field label={t('issue.type')}>
-                        <span className="text-sm">{issue.type}</span>
+                        <span className="flex items-center gap-1.5 text-sm">
+                            {/* issueTypeIcon looks up a stable, module-level
+                                icon reference (or the Circle fallback) —
+                                it isn't defining a new component on every
+                                render, which is what this lint rule is
+                                actually guarding against. */}
+                            {/* eslint-disable-next-line react-hooks/static-components */}
+                            <TypeIcon className="size-3.5 text-muted-foreground" />
+                            {issue.type}
+                        </span>
                     </Field>
 
                     <Field label={t('issue.assignee')}>
@@ -394,105 +427,107 @@ export function IssueDetailPanel({
                             placeholder={t('issue.parentPlaceholder')}
                         />
                     </Field>
+                </div>
+            </div>
 
-                    {/* Children is the reverse of Parent, derived by the
-                        backend from every issue's parent field — read-only
-                        here, since the way to add one is to set that child's
-                        Parent above. */}
-                    <Field label={t('issue.children')}>
-                        <div className="flex flex-col gap-1">
-                            {issue.children.map((id) => {
-                                // Title is workspace data, shown as authored
-                                // (rule 11); the ID alone is the fallback for
-                                // a child that somehow isn't in the list.
-                                const title = issues.find((i) => i.id === id)?.title;
-                                return (
-                                    <button
-                                        key={id}
-                                        onClick={() => onOpenIssue(id)}
-                                        className="text-left text-sm text-primary hover:underline"
-                                    >
-                                        {title ? `${id} · ${title}` : id}
-                                    </button>
-                                );
-                            })}
-                            {issue.children.length === 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                    {t('issue.noChildren')}
-                                </p>
-                            )}
-                        </div>
-                    </Field>
-
-                    <Field label={t('issue.links')}>
-                        <div className="flex flex-col gap-1">
-                            {issue.links.map((l) => (
+            {/* Children/Links/Referenced by are relationship and reference
+                lists, not field pickers — moved out of the narrow metadata
+                rail and down here next to Timeline (GARNET-27). The rail
+                above keeps only Status/Type/Assignee/Priority/Parent, the
+                things a picker rail is actually good at. */}
+            <div className="grid grid-cols-3 gap-6 border-t border-border pt-3">
+                <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">{t('issue.children')}</span>
+                    <div className="flex flex-col gap-1">
+                        {issue.children.map((id) => {
+                            // Title is workspace data, shown as authored
+                            // (rule 11); the ID alone is the fallback for a
+                            // child that somehow isn't in the list.
+                            const title = issues.find((i) => i.id === id)?.title;
+                            return (
                                 <button
-                                    key={`${l.type}:${l.target}`}
-                                    onClick={() => onOpenIssue(l.target)}
-                                    className="text-left text-sm text-muted-foreground hover:text-primary hover:underline"
+                                    key={id}
+                                    onClick={() => onOpenIssue(id)}
+                                    className="text-left text-sm text-primary hover:underline"
                                 >
-                                    {linkTypeLabel(t, l.type)} → {l.target}
+                                    {title ? `${id} · ${title}` : id}
                                 </button>
-                            ))}
-                            {issue.links.length === 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                    {t('issue.noLinks')}
-                                </p>
-                            )}
-                        </div>
-                        <div className="mt-1 flex flex-col gap-1.5">
-                            <Select
-                                items={linkTypeItems}
-                                value={linkType}
-                                onValueChange={(v) =>
-                                    setLinkType(v == null ? LINK_TYPES[0] : String(v))
-                                }
-                            >
-                                <SelectTrigger className="w-full" size="sm">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {linkTypeItems.map((item) => (
-                                        <SelectItem
-                                            key={item.value}
-                                            value={item.value}
-                                            label={item.label}
-                                        >
-                                            {item.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <IssuePicker
-                                issues={issues}
-                                excludeId={issue.id}
-                                value={linkTarget}
-                                onValueChange={setLinkTarget}
-                                placeholder={t('issue.linkTargetPlaceholder')}
-                            />
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={!linkTarget.trim()}
-                                onClick={() => {
-                                    void mutate((path) =>
-                                        AddIssueLink(path, issue.id, linkType, linkTarget.trim())
-                                    ).then((ok) => ok && setLinkTarget(''));
-                                }}
-                            >
-                                {t('issue.addLink')}
-                            </Button>
-                        </div>
-                    </Field>
+                            );
+                        })}
+                        {issue.children.length === 0 && (
+                            <p className="text-sm text-muted-foreground">{t('issue.noChildren')}</p>
+                        )}
+                    </div>
+                </div>
 
-                    <Field label={t('backlinks.heading')}>
-                        <BacklinkList
-                            sources={referencedBy}
-                            onOpenIssue={onOpenIssue}
-                            onOpenDocument={onOpenDocument}
+                <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">{t('issue.links')}</span>
+                    <div className="flex flex-col gap-1">
+                        {issue.links.map((l) => (
+                            <button
+                                key={`${l.type}:${l.target}`}
+                                onClick={() => onOpenIssue(l.target)}
+                                className="text-left text-sm text-muted-foreground hover:text-primary hover:underline"
+                            >
+                                {linkTypeLabel(t, l.type)} → {l.target}
+                            </button>
+                        ))}
+                        {issue.links.length === 0 && (
+                            <p className="text-sm text-muted-foreground">{t('issue.noLinks')}</p>
+                        )}
+                    </div>
+                    <div className="mt-1 flex flex-col gap-1.5">
+                        <Select
+                            items={linkTypeItems}
+                            value={linkType}
+                            onValueChange={(v) =>
+                                setLinkType(v == null ? LINK_TYPES[0] : String(v))
+                            }
+                        >
+                            <SelectTrigger className="w-full" size="sm">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {linkTypeItems.map((item) => (
+                                    <SelectItem
+                                        key={item.value}
+                                        value={item.value}
+                                        label={item.label}
+                                    >
+                                        {item.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <IssuePicker
+                            issues={issues}
+                            excludeId={issue.id}
+                            value={linkTarget}
+                            onValueChange={setLinkTarget}
+                            placeholder={t('issue.linkTargetPlaceholder')}
                         />
-                    </Field>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={!linkTarget.trim()}
+                            onClick={() => {
+                                void mutate((path) =>
+                                    AddIssueLink(path, issue.id, linkType, linkTarget.trim())
+                                ).then((ok) => ok && setLinkTarget(''));
+                            }}
+                        >
+                            {t('issue.addLink')}
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">{t('backlinks.heading')}</span>
+                    <BacklinkList
+                        sources={referencedBy}
+                        onOpenIssue={onOpenIssue}
+                        onOpenDocument={onOpenDocument}
+                    />
                 </div>
             </div>
 
@@ -541,6 +576,30 @@ export function IssueDetailPanel({
                     )}
                 </div>
             </div>
+
+            <div className="border-t border-border pt-3">
+                <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                    {t('issue.deleteIssue')}
+                </Button>
+            </div>
+
+            <ConfirmDeleteDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                title={t('issue.deleteConfirmTitle')}
+                description={t('issue.deleteConfirmBody')}
+                pending={deleting}
+                onConfirm={() => {
+                    setDeleting(true);
+                    void mutate((path) => DeleteIssue(path, issue.id)).then((ok) => {
+                        setDeleting(false);
+                        if (ok) {
+                            setDeleteOpen(false);
+                            onDeleted();
+                        }
+                    });
+                }}
+            />
         </div>
     );
 }

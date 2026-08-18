@@ -36,6 +36,7 @@ const (
 	CodeDocumentNotMarkdown   = "document_not_markdown"
 	CodeDocumentPathReserved  = "document_path_reserved"
 	CodeDocumentUnreadable    = "document_unreadable"
+	CodeDocumentNotFound      = "document_not_found"
 	CodeTodoNotFound          = "todo_not_found"
 	CodeProjectKeyRequired    = "project_key_required"
 	CodeProjectKeyInvalid     = "project_key_invalid"
@@ -259,6 +260,14 @@ func errDocumentUnreadable(path string, cause error) error {
 		Params:  map[string]string{"path": path},
 		Message: fmt.Sprintf("reading %q: %v", path, cause),
 		cause:   cause,
+	}
+}
+
+func errDocumentNotFound(path string) error {
+	return &CodedError{
+		Code:    CodeDocumentNotFound,
+		Params:  map[string]string{"path": path},
+		Message: fmt.Sprintf("document %q does not exist", path),
 	}
 }
 

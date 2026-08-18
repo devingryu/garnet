@@ -131,6 +131,34 @@ func TestUpdateIssueBody_NotFound(t *testing.T) {
 	}
 }
 
+func TestDeleteIssue(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	if err := DeleteIssue(root, "GRNT-1"); err != nil {
+		t.Fatalf("DeleteIssue() returned error: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "issues", "GRNT-1")); !os.IsNotExist(err) {
+		t.Errorf("expected the issue directory to be gone, stat returned: %v", err)
+	}
+
+	ws, err := Open(root)
+	if err != nil {
+		t.Fatalf("Open() returned error: %v", err)
+	}
+	for _, issue := range ws.Issues {
+		if issue.ID == "GRNT-1" {
+			t.Errorf("expected GRNT-1 gone from the reloaded workspace, still present: %+v", issue)
+		}
+	}
+}
+
+func TestDeleteIssue_NotFound(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if err := DeleteIssue(root, "GRNT-999"); err == nil {
+		t.Fatal("expected an error for a nonexistent issue, got nil")
+	}
+}
+
 func TestAddTimelineNote(t *testing.T) {
 	root := copyFixture(t, "valid")
 	setIdentity(t, root)

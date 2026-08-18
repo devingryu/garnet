@@ -96,6 +96,11 @@ func (a *App) SetIssueTitle(path, issueID, title string) (*workspace.Issue, erro
 	return coded(workspace.SetIssueTitle(path, issueID, title))
 }
 
+// DeleteIssue removes an issue's directory entirely.
+func (a *App) DeleteIssue(path, issueID string) error {
+	return codedOnly(workspace.DeleteIssue(path, issueID))
+}
+
 // TransitionIssueStatus moves an issue to a new status, validated against
 // its project's workflow when one is declared.
 func (a *App) TransitionIssueStatus(path, issueID, newStatus string) (*workspace.Issue, error) {
@@ -152,6 +157,11 @@ func (a *App) ReadDocument(path, relPath string) (string, error) {
 // WriteDocument creates or overwrites a document.
 func (a *App) WriteDocument(path, relPath, content string) error {
 	return codedOnly(workspace.WriteDocument(path, relPath, content))
+}
+
+// DeleteDocument removes a document file.
+func (a *App) DeleteDocument(path, relPath string) error {
+	return codedOnly(workspace.DeleteDocument(path, relPath))
 }
 
 // SetProjectIssueTypes replaces a project's declared issue types.
