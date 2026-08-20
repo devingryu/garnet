@@ -71,6 +71,30 @@ export function WorkspaceView() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Re-read the tree whenever the window regains focus, so an edit made
+    // outside Garnet (another editor, git, an agent) while the window was
+    // in the background shows up without a manual Reload click — the same
+    // re-scan the toolbar's Reload button already triggers, just on a
+    // signal instead of a click. `pending` guards against overlapping an
+    // already-in-flight read; `visibilitychange` covers app-switch/minimize
+    // cases `focus` alone can miss.
+    const loadedPath = loaded?.path;
+    useEffect(() => {
+        if (loadedPath === undefined) return;
+        function onFocus() {
+            if (!pending) void reload();
+        }
+        function onVisibilityChange() {
+            if (document.visibilityState === 'visible') onFocus();
+        }
+        window.addEventListener('focus', onFocus);
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => {
+            window.removeEventListener('focus', onFocus);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
+    }, [loadedPath, pending, reload]);
+
     // Open tabs, VSCode-style: they persist across project switches, and
     // clicking something already open focuses it instead of duplicating it.
     const [tabs, setTabs] = useState<Tab[]>([]);
