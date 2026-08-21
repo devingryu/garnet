@@ -27,6 +27,7 @@
     "issues": "이슈",
     "documents": "문서",
     "newDocument": "새 문서",
+    "recentChanges": "최근 변경",
     "noDocuments": "아직 문서가 없습니다.",
     "git": "Git"
   },

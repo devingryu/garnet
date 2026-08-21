@@ -28,6 +28,7 @@
     "issues": "Issues",
     "documents": "Documents",
     "newDocument": "New document",
+    "recentChanges": "Recently changed",
     "noDocuments": "No documents yet.",
     "git": "Git"
   },

@@ -27,17 +27,20 @@ import {NewDocumentDialog} from '@/components/new-document-dialog';
 import {GitPanel} from '@/components/git-panel';
 import {ProjectSettingsDialog} from '@/components/project-settings-dialog';
 import type {SettingsSection} from '@/components/project-settings-dialog';
+import {RecentChangesList} from '@/components/recent-changes-list';
 import {backlinksFor} from '@/lib/documents';
+import {recentChanges} from '@/lib/recent-changes';
 import {useWorkspace} from '@/lib/use-workspace';
 import {
     GetIdentity,
+    GitStatus as FetchGitStatus,
     RecentWorkspaces,
     RecordRecentWorkspace,
     SelectWorkspaceFolder,
     TransitionIssueStatus,
     WriteDocument,
 } from '../../wailsjs/go/main/App';
-import type {Identity, RecentWorkspace} from '@/lib/model';
+import type {GitStatus, Identity, RecentWorkspace} from '@/lib/model';
 
 /** The last path segment, for the bold line of a recent-workspace entry —
  *  handles both POSIX and Windows separators since either could show up in
@@ -61,6 +64,11 @@ export function WorkspaceView() {
     const [settingsSection, setSettingsSection] = useState<SettingsSection>('general');
     const [newProjectOpen, setNewProjectOpen] = useState(false);
     const [recentWorkspaces, setRecentWorkspaces] = useState<RecentWorkspace[]>([]);
+    // Backs the sidebar's "Recently changed" section (GARNET-10). Held here
+    // rather than inside RecentChangesList because it has to be re-fetched
+    // on the same signals the workspace itself is — window focus, an
+    // explicit Reload, or any write.
+    const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
 
     // Fetched once, when the view first mounts — GARNET-24. A fresh list
     // would only matter after opening another workspace, which reloads this
@@ -72,6 +80,32 @@ export function WorkspaceView() {
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Re-fetch git status every time the workspace itself is (re)loaded —
+    // `loaded` is a fresh object per read, so this covers the initial open,
+    // an explicit Reload, the focus re-read below, and every write, without
+    // needing its own signal (GARNET-10).
+    //
+    // Deliberately not routed through `run`: a workspace that isn't a git
+    // repo yet is a perfectly valid one, and GitStatus reports that as an
+    // error — which must leave the sidebar section empty, not raise an
+    // error banner over the whole view. Best-effort, same as
+    // RecordRecentWorkspace.
+    useEffect(() => {
+        const path = loaded?.path;
+        if (path === undefined) return;
+        let cancelled = false;
+        void FetchGitStatus(path)
+            .then((status) => {
+                if (!cancelled) setGitStatus(status);
+            })
+            .catch(() => {
+                if (!cancelled) setGitStatus(null);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [loaded]);
 
     // Re-read the tree whenever the window regains focus, so an edit made
     // outside Garnet (another editor, git, an agent) while the window was
@@ -288,6 +322,12 @@ export function WorkspaceView() {
                 <GitBranch className="size-3.5" />
                 {t('sidebar.git')}
             </button>
+
+            <RecentChangesList
+                changes={recentChanges(gitStatus)}
+                onOpenIssue={openIssue}
+                onOpenDocument={openDocument}
+            />
 
             <div className="mt-3 mb-1 flex items-center justify-between px-2">
                 <span className="text-xs text-muted-foreground">{t('sidebar.documents')}</span>
