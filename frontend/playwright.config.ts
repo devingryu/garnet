@@ -12,18 +12,23 @@ export default defineConfig({
     },
     // Boots the real app; reuses an already-running `wails dev` if one is up
     // (the common case while iterating), starts a fresh one otherwise. The
-    // env var redirects the recent-workspaces list (workspace/recent.go) to
-    // a throwaway file, so a test run never pollutes the real one sitting in
-    // the developer's own OS config directory — but only takes effect for a
-    // server this config actually starts. If you already had a `wails dev`
-    // running before adding this, restart it once so it picks the var up.
+    // env vars redirect app-level (not workspace) state — the
+    // recent-workspaces list (workspace/recent.go) and the profile list
+    // (workspace/profiles.go, GARNET-6) — to throwaway files, so a test run
+    // never pollutes the real ones sitting in the developer's own OS config
+    // directory. Only takes effect for a server this config actually
+    // starts — if you already had a `wails dev` running before adding a new
+    // one of these, restart it once so it picks the var up.
     webServer: {
         command: 'wails dev',
         cwd: '..',
         url: 'http://localhost:34115',
         reuseExistingServer: !process.env.CI,
         timeout: 60_000,
-        env: {GARNET_RECENT_WORKSPACES_PATH: '/tmp/garnet-e2e-recent-workspaces.json'},
+        env: {
+            GARNET_RECENT_WORKSPACES_PATH: '/tmp/garnet-e2e-recent-workspaces.json',
+            GARNET_PROFILES_PATH: '/tmp/garnet-e2e-profiles.json',
+        },
     },
     projects: [{name: 'chromium', use: {...devices['Desktop Chrome']}}],
 });

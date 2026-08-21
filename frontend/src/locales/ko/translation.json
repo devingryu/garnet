@@ -192,7 +192,15 @@
     "not_a_git_repo": "이 워크스페이스는 아직 git 저장소가 아닙니다.",
     "git_no_upstream": "현재 브랜치에 push/pull할 upstream이 설정되어 있지 않습니다.",
     "commit_message_required": "커밋 메시지를 입력해야 합니다.",
-    "document_not_found": "해당 문서가 더 이상 존재하지 않습니다."
+    "document_not_found": "해당 문서가 더 이상 존재하지 않습니다.",
+    "profile_name_required": "프로필 이름을 입력해야 합니다.",
+    "profile_email_required": "프로필 이메일을 입력해야 합니다.",
+    "profile_already_exists": "{{email}}로 등록된 프로필이 이미 있습니다.",
+    "profile_not_found": "{{email}}로 등록된 프로필이 없습니다.",
+    "user_email_required": "사용자 이메일을 입력해야 합니다.",
+    "user_name_required": "사용자 이름을 입력해야 합니다.",
+    "user_already_exists": "{{email}}로 등록된 사용자가 이미 있습니다.",
+    "user_not_found": "{{email}}로 등록된 사용자가 없습니다."
   },
   "markdownView": {
     "raw": "원문",
@@ -221,5 +229,10 @@
       "conflicted": "충돌",
       "untracked": "추적 안 됨"
     }
+  },
+  "userSettings": {
+    "heading": "프로필",
+    "addProfile": "프로필 추가",
+    "noProfiles": "저장된 프로필이 없습니다."
   }
 }

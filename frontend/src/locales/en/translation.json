@@ -193,7 +193,15 @@
     "not_a_git_repo": "This workspace isn't a git repository yet.",
     "git_no_upstream": "The current branch has no upstream configured to push or pull against.",
     "commit_message_required": "A commit message is required.",
-    "document_not_found": "That document no longer exists."
+    "document_not_found": "That document no longer exists.",
+    "profile_name_required": "A profile name is required.",
+    "profile_email_required": "A profile email is required.",
+    "profile_already_exists": "A profile already exists for {{email}}.",
+    "profile_not_found": "No profile found for {{email}}.",
+    "user_email_required": "A user email is required.",
+    "user_name_required": "A user name is required.",
+    "user_already_exists": "A user is already registered for {{email}}.",
+    "user_not_found": "No user registered for {{email}}."
   },
   "markdownView": {
     "raw": "Raw",
@@ -222,5 +230,10 @@
       "conflicted": "conflicted",
       "untracked": "untracked"
     }
+  },
+  "userSettings": {
+    "heading": "Profiles",
+    "addProfile": "Add profile",
+    "noProfiles": "No profiles saved yet."
   }
 }

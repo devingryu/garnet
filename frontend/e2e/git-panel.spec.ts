@@ -32,8 +32,12 @@ test('stages, commits, and reports a clean tree', async ({page}) => {
 
     const panel = page.getByRole('main');
     await expect(panel.getByText('main')).toBeVisible();
-    await expect(panel.getByText('notes.md')).toBeVisible();
-    await expect(panel.getByText('untracked')).toBeVisible();
+    // Scoped to the specific row's accessible name (label text + status),
+    // not a bare "untracked" text search — opening this fixture's legacy
+    // .garnet.local.yaml migrates it in place (GARNET-6), which also
+    // creates .gitignore if it's missing, so notes.md isn't the only
+    // untracked file on the tree by the time the panel renders.
+    await expect(panel.getByRole('checkbox', {name: 'notes.md untracked'})).toBeVisible();
 
     await page.getByRole('button', {name: 'Stage all'}).click();
     // Staged now shows the file; Unstaged falls back to "None."

@@ -6,6 +6,10 @@ export function AddIssueLink(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['AddIssueLink'](arg1, arg2, arg3, arg4);
 }
 
+export function AddProfile(arg1, arg2) {
+  return window['go']['main']['App']['AddProfile'](arg1, arg2);
+}
+
 export function AddProjectMember(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['AddProjectMember'](arg1, arg2, arg3, arg4);
 }
@@ -16,6 +20,10 @@ export function AddProjectRepo(arg1, arg2, arg3, arg4) {
 
 export function AddTimelineNote(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddTimelineNote'](arg1, arg2, arg3);
+}
+
+export function AddUser(arg1, arg2, arg3) {
+  return window['go']['main']['App']['AddUser'](arg1, arg2, arg3);
 }
 
 export function ArchiveProject(arg1, arg2) {
@@ -70,6 +78,14 @@ export function GitStatus(arg1) {
   return window['go']['main']['App']['GitStatus'](arg1);
 }
 
+export function ListProfiles() {
+  return window['go']['main']['App']['ListProfiles']();
+}
+
+export function ListUsers(arg1) {
+  return window['go']['main']['App']['ListUsers'](arg1);
+}
+
 export function OpenWorkspace(arg1) {
   return window['go']['main']['App']['OpenWorkspace'](arg1);
 }
@@ -86,12 +102,24 @@ export function RecordRecentWorkspace(arg1) {
   return window['go']['main']['App']['RecordRecentWorkspace'](arg1);
 }
 
+export function RemoveProfile(arg1) {
+  return window['go']['main']['App']['RemoveProfile'](arg1);
+}
+
 export function RemoveProjectRepo(arg1, arg2, arg3) {
   return window['go']['main']['App']['RemoveProjectRepo'](arg1, arg2, arg3);
 }
 
+export function RemoveUser(arg1, arg2) {
+  return window['go']['main']['App']['RemoveUser'](arg1, arg2);
+}
+
 export function SelectWorkspaceFolder(arg1) {
   return window['go']['main']['App']['SelectWorkspaceFolder'](arg1);
+}
+
+export function SetActiveProfile(arg1, arg2) {
+  return window['go']['main']['App']['SetActiveProfile'](arg1, arg2);
 }
 
 export function SetIdentity(arg1, arg2, arg3) {
@@ -116,6 +144,10 @@ export function SetIssueTitle(arg1, arg2, arg3) {
 
 export function SetProjectIssueTypes(arg1, arg2, arg3) {
   return window['go']['main']['App']['SetProjectIssueTypes'](arg1, arg2, arg3);
+}
+
+export function SetUserLinks(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SetUserLinks'](arg1, arg2, arg3, arg4);
 }
 
 export function SetWorkflow(arg1, arg2, arg3, arg4) {

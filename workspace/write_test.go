@@ -9,6 +9,11 @@ import (
 
 func setIdentity(t *testing.T, root string) {
 	t.Helper()
+	// SaveIdentity now registers a profile at the app level (GARNET-6), so
+	// this needs the same temp-profiles guard as any other test touching
+	// profiles — otherwise every one of this helper's callers would write
+	// to the real machine's profile list.
+	useTempProfiles(t)
 	if err := SaveIdentity(root, Identity{Name: "Test User", Email: "test@example.com"}); err != nil {
 		t.Fatalf("SaveIdentity() returned error: %v", err)
 	}
@@ -497,6 +502,7 @@ func TestAddIssueLink_InvalidTarget(t *testing.T) {
 }
 
 func TestIdentity_RoundTrip(t *testing.T) {
+	useTempProfiles(t)
 	root := copyFixture(t, "valid")
 
 	id, err := LoadIdentity(root)
@@ -529,6 +535,7 @@ func TestIdentity_RoundTrip(t *testing.T) {
 }
 
 func TestIdentity_GitignoreAppendsWithoutDuplicating(t *testing.T) {
+	useTempProfiles(t)
 	root := copyFixture(t, "valid")
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("node_modules\n"), 0o644); err != nil {
 		t.Fatalf("writing pre-existing .gitignore: %v", err)

@@ -46,6 +46,14 @@ const (
 	CodeNotAGitRepo           = "not_a_git_repo"
 	CodeGitNoUpstream         = "git_no_upstream"
 	CodeCommitMessageRequired = "commit_message_required"
+	CodeProfileNameRequired   = "profile_name_required"
+	CodeProfileEmailRequired  = "profile_email_required"
+	CodeProfileAlreadyExists  = "profile_already_exists"
+	CodeProfileNotFound       = "profile_not_found"
+	CodeUserEmailRequired     = "user_email_required"
+	CodeUserNameRequired      = "user_name_required"
+	CodeUserAlreadyExists     = "user_already_exists"
+	CodeUserNotFound          = "user_not_found"
 )
 
 // CodedError is a failure the UI is expected to show to a person. Code says
@@ -327,4 +335,52 @@ func errGitNoUpstream() error {
 
 func errCommitMessageRequired() error {
 	return &CodedError{Code: CodeCommitMessageRequired, Message: "a commit message is required"}
+}
+
+func errProfileNameRequired() error {
+	return &CodedError{Code: CodeProfileNameRequired, Message: "profile name is required"}
+}
+
+func errProfileEmailRequired() error {
+	return &CodedError{Code: CodeProfileEmailRequired, Message: "profile email is required"}
+}
+
+func errProfileAlreadyExists(email string) error {
+	return &CodedError{
+		Code:    CodeProfileAlreadyExists,
+		Params:  map[string]string{"email": email},
+		Message: fmt.Sprintf("a profile already exists for %q", email),
+	}
+}
+
+func errProfileNotFound(email string) error {
+	return &CodedError{
+		Code:    CodeProfileNotFound,
+		Params:  map[string]string{"email": email},
+		Message: fmt.Sprintf("no profile found for %q", email),
+	}
+}
+
+func errUserEmailRequired() error {
+	return &CodedError{Code: CodeUserEmailRequired, Message: "user email is required"}
+}
+
+func errUserNameRequired() error {
+	return &CodedError{Code: CodeUserNameRequired, Message: "user name is required"}
+}
+
+func errUserAlreadyExists(email string) error {
+	return &CodedError{
+		Code:    CodeUserAlreadyExists,
+		Params:  map[string]string{"email": email},
+		Message: fmt.Sprintf("a user is already registered for %q", email),
+	}
+}
+
+func errUserNotFound(email string) error {
+	return &CodedError{
+		Code:    CodeUserNotFound,
+		Params:  map[string]string{"email": email},
+		Message: fmt.Sprintf("no user registered for %q", email),
+	}
 }

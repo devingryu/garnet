@@ -4,11 +4,15 @@ import {workspace} from '../models';
 
 export function AddIssueLink(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.Issue>;
 
+export function AddProfile(arg1:string,arg2:string):Promise<workspace.Profile>;
+
 export function AddProjectMember(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.Project>;
 
 export function AddProjectRepo(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.Project>;
 
 export function AddTimelineNote(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
+
+export function AddUser(arg1:string,arg2:string,arg3:string):Promise<workspace.User>;
 
 export function ArchiveProject(arg1:string,arg2:string):Promise<workspace.Project>;
 
@@ -36,6 +40,10 @@ export function GitStagePaths(arg1:string,arg2:Array<string>):Promise<void>;
 
 export function GitStatus(arg1:string):Promise<workspace.GitStatus>;
 
+export function ListProfiles():Promise<Array<workspace.Profile>>;
+
+export function ListUsers(arg1:string):Promise<Array<workspace.User>>;
+
 export function OpenWorkspace(arg1:string):Promise<workspace.Workspace>;
 
 export function ReadDocument(arg1:string,arg2:string):Promise<string>;
@@ -44,9 +52,15 @@ export function RecentWorkspaces():Promise<Array<workspace.RecentWorkspace>>;
 
 export function RecordRecentWorkspace(arg1:string):Promise<void>;
 
+export function RemoveProfile(arg1:string):Promise<void>;
+
 export function RemoveProjectRepo(arg1:string,arg2:string,arg3:string):Promise<workspace.Project>;
 
+export function RemoveUser(arg1:string,arg2:string):Promise<void>;
+
 export function SelectWorkspaceFolder(arg1:string):Promise<string>;
+
+export function SetActiveProfile(arg1:string,arg2:string):Promise<void>;
 
 export function SetIdentity(arg1:string,arg2:string,arg3:string):Promise<void>;
 
@@ -59,6 +73,8 @@ export function SetIssuePriority(arg1:string,arg2:string,arg3:string):Promise<wo
 export function SetIssueTitle(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
 
 export function SetProjectIssueTypes(arg1:string,arg2:string,arg3:Array<string>):Promise<workspace.Project>;
+
+export function SetUserLinks(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.User>;
 
 export function SetWorkflow(arg1:string,arg2:string,arg3:Array<workspace.Status>,arg4:Array<workspace.Transition>):Promise<workspace.Project>;
 

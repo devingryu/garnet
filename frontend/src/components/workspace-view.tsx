@@ -15,6 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {IdentitySetupDialog} from '@/components/identity-setup-dialog';
+import {UserSettingsDialog} from '@/components/user-settings-dialog';
 import {NewIssueDialog} from '@/components/new-issue-dialog';
 import {NewProjectDialog} from '@/components/new-project-dialog';
 import {IssueList} from '@/components/issue-list';
@@ -52,6 +53,7 @@ export function WorkspaceView() {
 
     const [identity, setIdentity] = useState<Identity | null>(null);
     const [identityDialogOpen, setIdentityDialogOpen] = useState(false);
+    const [userSettingsOpen, setUserSettingsOpen] = useState(false);
     const [selectedProjectKey, setSelectedProjectKey] = useState<string | null>(null);
     const [newIssueOpen, setNewIssueOpen] = useState(false);
     const [newDocumentOpen, setNewDocumentOpen] = useState(false);
@@ -340,6 +342,7 @@ export function WorkspaceView() {
             toolbar={toolbar}
             tabBar={tabBar}
             onSettingsClick={() => activeProject && openSettings('issueTypes')}
+            onUserSettingsClick={() => setUserSettingsOpen(true)}
         >
             <div className="flex flex-col gap-4">
                 {error && <p className="text-sm text-destructive">{error}</p>}
@@ -500,6 +503,13 @@ export function WorkspaceView() {
                     open={identityDialogOpen}
                     onOpenChange={setIdentityDialogOpen}
                     onSaved={setIdentity}
+                />
+
+                <UserSettingsDialog
+                    path={path}
+                    open={userSettingsOpen}
+                    onOpenChange={setUserSettingsOpen}
+                    onActiveProfileChanged={setIdentity}
                 />
             </div>
         </AppShell>

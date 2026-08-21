@@ -202,6 +202,7 @@ func TestCommitStaged_RequiresIdentity(t *testing.T) {
 }
 
 func TestCommitStaged_Success(t *testing.T) {
+	useTempProfiles(t)
 	root := copyFixture(t, "valid")
 	initCommittedGitRepo(t, root)
 	if err := SaveIdentity(root, Identity{Name: "Ada", Email: "ada@example.com"}); err != nil {
@@ -259,6 +260,7 @@ func TestPullRepo_NoUpstream(t *testing.T) {
 }
 
 func TestPushAndPullRepo_RoundTrip(t *testing.T) {
+	useTempProfiles(t)
 	bare := t.TempDir()
 	runGitT(t, bare, "init", "-q", "--bare", "-b", "main")
 

@@ -1,5 +1,5 @@
 import type {CSSProperties, ReactNode} from 'react';
-import {Settings} from 'lucide-react';
+import {Settings, UserCircle} from 'lucide-react';
 import {useTranslation} from 'react-i18next';
 import {LanguageSelect} from '@/components/language-select';
 
@@ -13,6 +13,7 @@ export function AppShell({
     toolbar,
     tabBar,
     onSettingsClick,
+    onUserSettingsClick,
 }: {
     children: ReactNode;
     /** Rendered at the very top of the sidebar, above the nav list — e.g. the workspace/project switcher. */
@@ -23,8 +24,11 @@ export function AppShell({
     toolbar?: ReactNode;
     /** Rendered as a row of open tabs between the toolbar and the content body. */
     tabBar?: ReactNode;
-    /** Called when the sidebar's settings icon is clicked. */
+    /** Called when the sidebar's (per-project) settings icon is clicked. */
     onSettingsClick?: () => void;
+    /** Called when the sidebar's user-settings icon is clicked — profiles
+     *  (GARNET-6), app-level rather than per-project. */
+    onUserSettingsClick?: () => void;
 }) {
     const {t} = useTranslation();
 
@@ -39,6 +43,13 @@ export function AppShell({
                     <div className="min-w-0 flex-1">
                         <LanguageSelect />
                     </div>
+                    <button
+                        onClick={onUserSettingsClick}
+                        aria-label={t('userSettings.heading')}
+                        className="flex shrink-0 items-center justify-center rounded-sm p-1.5 text-foreground/80 hover:bg-muted"
+                    >
+                        <UserCircle className="size-4" />
+                    </button>
                     <button
                         onClick={onSettingsClick}
                         aria-label={t('app.settings')}

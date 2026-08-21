@@ -81,6 +81,28 @@ func (a *App) SetIdentity(path, name, email string) error {
 	return codedOnly(workspace.SaveIdentity(path, workspace.Identity{Name: name, Email: email}))
 }
 
+// ListProfiles returns the user's saved profiles (app-level, not
+// per-workspace).
+func (a *App) ListProfiles() ([]workspace.Profile, error) {
+	return coded(workspace.ListProfiles())
+}
+
+// AddProfile saves a new profile.
+func (a *App) AddProfile(name, email string) (*workspace.Profile, error) {
+	return coded(workspace.AddProfile(name, email))
+}
+
+// RemoveProfile deletes a saved profile.
+func (a *App) RemoveProfile(email string) error {
+	return codedOnly(workspace.RemoveProfile(email))
+}
+
+// SetActiveProfile switches which saved profile the workspace at path
+// attributes new activity to.
+func (a *App) SetActiveProfile(path, email string) error {
+	return codedOnly(workspace.SetActiveProfile(path, email))
+}
+
 // CreateIssue creates a new issue under projectKey in the workspace at path.
 func (a *App) CreateIssue(path, projectKey, issueType, title string) (*workspace.Issue, error) {
 	return coded(workspace.CreateIssue(path, projectKey, issueType, title))
@@ -147,6 +169,27 @@ func (a *App) AddProjectMember(path, projectKey, name, email string) (*workspace
 // AddTimelineNote appends a manual note to an issue's timeline.
 func (a *App) AddTimelineNote(path, issueID, body string) (*workspace.Issue, error) {
 	return coded(workspace.AddTimelineNote(path, issueID, body))
+}
+
+// ListUsers returns the workspace's shared user registry.
+func (a *App) ListUsers(path string) ([]workspace.User, error) {
+	return coded(workspace.LoadUsers(path))
+}
+
+// AddUser registers a display name against an email in the workspace's
+// shared user registry.
+func (a *App) AddUser(path, email, name string) (*workspace.User, error) {
+	return coded(workspace.AddUser(path, email, name))
+}
+
+// RemoveUser un-registers an email from the user registry.
+func (a *App) RemoveUser(path, email string) error {
+	return codedOnly(workspace.RemoveUser(path, email))
+}
+
+// SetUserLinks updates a registered user's external account links.
+func (a *App) SetUserLinks(path, email, github, atlassian string) (*workspace.User, error) {
+	return coded(workspace.SetUserLinks(path, email, github, atlassian))
 }
 
 // ReadDocument returns a document's raw content.

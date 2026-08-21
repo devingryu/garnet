@@ -288,6 +288,20 @@ export namespace workspace {
 	        this.email = source["email"];
 	    }
 	}
+	export class Profile {
+	    name: string;
+	    email: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Profile(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.email = source["email"];
+	    }
+	}
 	export class Transition {
 	    from: string;
 	    to: string[];
@@ -446,6 +460,24 @@ export namespace workspace {
 	
 	
 	
+	export class User {
+	    email: string;
+	    name: string;
+	    github: string;
+	    atlassian: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new User(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.email = source["email"];
+	        this.name = source["name"];
+	        this.github = source["github"];
+	        this.atlassian = source["atlassian"];
+	    }
+	}
 	
 	export class Workspace {
 	    root: string;

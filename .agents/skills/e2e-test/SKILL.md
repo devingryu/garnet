@@ -89,6 +89,13 @@ bunx playwright install chromium
   path; `playwright.config.ts`'s `webServer.env` sets it to a throwaway file.
   If you add another piece of app-level (not workspace-level) persistent
   state, give it the same treatment before writing a test that touches it.
+  Redirecting it isn't the whole fix, though: unlike `makeFixtureWorkspace`
+  (a fresh temp directory every test), the redirected path is one fixed
+  file shared by every test in the run — a profile one test adds
+  (`workspace/profiles.go`, GARNET-6) is still sitting there for the next
+  one. A test that touches this kind of state needs to clear its file at
+  the start, not just point it away from the real one — see
+  `user-settings.spec.ts`.
 
 ## Scope
 
