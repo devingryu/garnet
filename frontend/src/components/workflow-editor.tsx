@@ -97,9 +97,21 @@ export function WorkflowEditor({
         list: StatusDraft[]
     ): Transition[] {
         const ids = new Set(list.map((s) => s.id.trim()).filter(Boolean));
-        return Object.entries(map)
-            .filter(([from]) => ids.has(from))
-            .map(([from, toSet]) => ({from, to: Array.from(toSet).filter((to) => ids.has(to))}));
+        return (
+            Object.entries(map)
+                .filter(([from]) => ids.has(from))
+                .map(([from, toSet]) => ({
+                    from,
+                    to: Array.from(toSet).filter((to) => ids.has(to)),
+                }))
+                // A status whose targets were all unchecked leaves an empty
+                // Set behind, which would write `{from: done, to: []}` to
+                // workflow.md — noise that means exactly the same as having
+                // no entry at all. Files are the source of truth here
+                // (ADR 0001), so what lands on disk shouldn't carry
+                // artifacts of how it was edited.
+                .filter((t) => t.to.length > 0)
+        );
     }
 
     // Validated against every row with a non-empty id — an unfinished new
