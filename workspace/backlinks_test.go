@@ -69,3 +69,39 @@ func TestBuildLinkIndex_NoWarningForResolvedLink(t *testing.T) {
 		t.Errorf("expected no warnings for a link that resolves, got %v", warnings)
 	}
 }
+
+// TestExtractLinks_IgnoresCodeSpans guards against the false positive that
+// surfaced from AGENTS.md itself: prose illustrating link syntax inside
+// backticks (inline or fenced) is not an actual link, and must not be
+// extracted at all — flagging it as dangling would be worse than not
+// checking, since it's not a real reference in the first place.
+func TestExtractLinks_IgnoresCodeSpans(t *testing.T) {
+	content := "Inline: `[GRNT-3](../GRNT-3/)` is just an example.\n\n" +
+		"```\n[GRNT-4](../GRNT-4/)\n```\n\n" +
+		"Real: [GRNT-5](../GRNT-5/)."
+	links := extractLinks(content)
+	if len(links) != 1 || links[0] != "../GRNT-5/" {
+		t.Errorf("expected only the real link extracted, got %v", links)
+	}
+}
+
+// TestBuildLinkIndex_NoWarningForDotdirDocument guards against the other
+// false positive found alongside it: a link into a dotdir (e.g.
+// .agents/skills/...) is real on disk even though ListDocuments
+// deliberately excludes dotdirs from the browsable Documents list — the
+// existence check has to hit the filesystem, not that curated list.
+func TestBuildLinkIndex_NoWarningForDotdirDocument(t *testing.T) {
+	root := t.TempDir()
+	writeTestFile(t, root, "notes/a.md", "See [skill](../.agents/skills/foo/SKILL.md).")
+	writeTestFile(t, root, ".agents/skills/foo/SKILL.md", "")
+
+	// ListDocuments would exclude .agents/... from `documents` — passed
+	// here exactly as Open would derive it, to prove the check doesn't
+	// depend on that list containing the target.
+	documents := []Document{{Path: "notes/a.md"}}
+
+	_, warnings := buildLinkIndex(root, nil, documents)
+	if len(warnings) != 0 {
+		t.Errorf("expected no warning for a real dotdir document, got %v", warnings)
+	}
+}

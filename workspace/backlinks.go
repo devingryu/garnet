@@ -26,9 +26,18 @@ type BacklinkEntry struct {
 }
 
 var mdLinkRE = regexp.MustCompile(`\[[^\]]*\]\(([^)\s]+)\)`)
+var fencedCodeRE = regexp.MustCompile("(?s)```.*?```")
+var inlineCodeRE = regexp.MustCompile("`[^`\n]*`")
 
-// extractLinks returns the URL portion of every markdown link in content.
+// extractLinks returns the URL portion of every markdown link in content,
+// ignoring anything inside a fenced or inline code span. AGENTS.md itself
+// is what caught this: it illustrates the link syntax with an inline-code
+// example, prose about links rather than an actual one — matching it
+// anyway is what first surfaced this as a dangling-link warning
+// (GARNET-28) for a target that was never supposed to resolve.
 func extractLinks(content string) []string {
+	content = fencedCodeRE.ReplaceAllString(content, "")
+	content = inlineCodeRE.ReplaceAllString(content, "")
 	matches := mdLinkRE.FindAllStringSubmatch(content, -1)
 	links := make([]string, 0, len(matches))
 	for _, m := range matches {
@@ -80,6 +89,14 @@ func resolveLinkTarget(root, sourceDir, link string) (kind, id string, ok bool) 
 	return "", "", false
 }
 
+// documentExists checks the filesystem directly, not the curated Documents
+// list — see buildLinkIndex's comment on why that distinction matters for
+// a link into a dotdir.
+func documentExists(root, relPath string) bool {
+	info, err := os.Stat(filepath.Join(root, filepath.FromSlash(relPath)))
+	return err == nil && !info.IsDir()
+}
+
 // buildLinkIndex scans every issue and document for markdown links and
 // inverts them into a target -> sources index, plus any warnings from
 // documents that couldn't be read (an unreadable issue is already reported
@@ -93,20 +110,23 @@ func buildLinkIndex(root string, issues []Issue, documents []Document) ([]Backli
 	seen := map[key]map[key]bool{}
 	var warnings []string
 
-	// validIssues/validDocuments back GARNET-28: a link can be shaped like
-	// a real issue or document reference (resolveLinkTarget says ok) and
-	// still point at nothing, most often because the document it named was
-	// moved, renamed, or deleted out from under it. There's no move/rename
-	// operation that rewrites links (that's the harder half of GARNET-28,
-	// still open) — this is the cheap half: surface what broke instead of
-	// letting it drop out of the backlink index with no signal.
+	// validIssues backs GARNET-28: a link can be shaped like a real issue
+	// reference (resolveLinkTarget says ok) and still point at nothing,
+	// most often because the issue it named was moved, renamed, or deleted
+	// out from under it. There's no move/rename operation that rewrites
+	// links (that's the harder half of GARNET-28, still open) — this is
+	// the cheap half: surface what broke instead of letting it drop out of
+	// the backlink index with no signal.
+	//
+	// A document target is checked against the filesystem directly
+	// (documentExists), not against the documents list: ListDocuments
+	// deliberately excludes dotdirs like .agents/ (they're tooling, not
+	// browsable content), but a link into one is still perfectly real —
+	// this file's own skills links prove it. Checking the curated list
+	// instead of the disk would flag every one of those as dangling.
 	validIssues := make(map[string]bool, len(issues))
 	for _, issue := range issues {
 		validIssues[issue.ID] = true
-	}
-	validDocuments := make(map[string]bool, len(documents))
-	for _, doc := range documents {
-		validDocuments[doc.Path] = true
 	}
 
 	addLinks := func(sourceKind, sourceID, sourceDir, content string) {
@@ -119,7 +139,7 @@ func buildLinkIndex(root string, issues []Issue, documents []Document) ([]Backli
 				continue // ignore self-links
 			}
 			exists := (targetKind == "issue" && validIssues[targetID]) ||
-				(targetKind == "document" && validDocuments[targetID])
+				(targetKind == "document" && documentExists(root, targetID))
 			if !exists {
 				warnings = append(warnings, fmt.Sprintf(
 					"%s %q links to %s %q, which doesn't exist (a moved, renamed, or deleted target?)",
