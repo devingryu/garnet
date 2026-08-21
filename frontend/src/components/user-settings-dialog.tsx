@@ -3,25 +3,33 @@ import {useTranslation} from 'react-i18next';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {UserAvatar} from '@/components/user-avatar';
 import {useAsyncAction} from '@/lib/use-async-action';
 import {
     AddProfile,
+    AddUser,
     GetIdentity,
     ListProfiles,
     RemoveProfile,
+    RemoveUser,
     SetActiveProfile,
 } from '../../wailsjs/go/main/App';
-import type {Identity, Profile} from '@/lib/model';
+import type {Identity, Profile, User} from '@/lib/model';
 
-/** Profiles (GARNET-6) — app-level, not per-project, which is why this is
- *  its own dialog rather than a section of ProjectSettingsDialog. The same
- *  saved profile list shows up no matter which workspace is open; only
- *  which one is *active* is per-workspace. */
+type Section = 'profiles' | 'people';
+const SECTIONS: Section[] = ['profiles', 'people'];
+
+/** Profiles (GARNET-6, app-level "who could I be") and People (GARNET-16's
+ *  users.yaml, the workspace-shared display registry for any actor) share
+ *  one dialog since both are about identity, but they're separate sections
+ *  — different scope (app vs. workspace) and different data. */
 export function UserSettingsDialog({
     path,
     open,
     onOpenChange,
     onActiveProfileChanged,
+    users,
+    onUsersChanged,
 }: {
     path: string;
     open: boolean;
@@ -29,8 +37,14 @@ export function UserSettingsDialog({
     /** Runs after the active profile changes, so the rest of the app (the
      *  reporter a new issue would get, etc.) reflects it immediately. */
     onActiveProfileChanged: (identity: Identity | null) => void;
+    /** The workspace's current users.yaml registry (part of the loaded
+     *  workspace — AGENTS.md rule 2, no separate fetch to go stale). */
+    users: User[];
+    /** Runs after a People-section write, to re-read the workspace. */
+    onUsersChanged: () => void;
 }) {
     const {t} = useTranslation();
+    const [section, setSection] = useState<Section>('profiles');
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -38,18 +52,117 @@ export function UserSettingsDialog({
                 <DialogHeader>
                     <DialogTitle>{t('userSettings.heading')}</DialogTitle>
                 </DialogHeader>
+
+                <div className="flex gap-1 border-b border-border pb-2">
+                    {SECTIONS.map((s) => (
+                        <Button
+                            key={s}
+                            variant={s === section ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setSection(s)}
+                        >
+                            {t(`userSettings.section.${s}`)}
+                        </Button>
+                    ))}
+                </div>
+
                 {/* Keyed on `open` so every reopen starts from what's
                     actually on disk (AGENTS.md rule 6), the same pattern
                     ProjectSettingsDialog uses for its own form. */}
-                {open && (
+                {open && section === 'profiles' && (
                     <ProfilesPanel
                         key={path}
                         path={path}
                         onActiveProfileChanged={onActiveProfileChanged}
                     />
                 )}
+                {open && section === 'people' && (
+                    <PeoplePanel key={path} path={path} users={users} onChanged={onUsersChanged} />
+                )}
             </DialogContent>
         </Dialog>
+    );
+}
+
+function PeoplePanel({
+    path,
+    users,
+    onChanged,
+}: {
+    path: string;
+    users: User[];
+    onChanged: () => void;
+}) {
+    const {t} = useTranslation();
+    const {run, error, pending} = useAsyncAction();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+
+    return (
+        <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+                {users.map((u) => (
+                    <div
+                        key={u.email}
+                        className="flex items-center gap-2 rounded-sm px-1.5 py-1 text-sm hover:bg-muted"
+                    >
+                        <UserAvatar email={u.email} name={u.name} />
+                        {/* Name/email are the user's own content, shown as
+                            authored (rule 11). */}
+                        <span className="flex-1">
+                            {u.name} <span className="text-muted-foreground">{u.email}</span>
+                        </span>
+                        <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            aria-label={t('common.remove', {name: u.name})}
+                            disabled={pending}
+                            onClick={() =>
+                                void run(() => RemoveUser(path, u.email)).then((r) => {
+                                    if (r.ok) onChanged();
+                                })
+                            }
+                        >
+                            ×
+                        </Button>
+                    </div>
+                ))}
+                {users.length === 0 && (
+                    <p className="text-sm text-muted-foreground">{t('userSettings.noUsers')}</p>
+                )}
+            </div>
+
+            <div className="flex gap-1.5 border-t border-border pt-3">
+                <Input
+                    placeholder={t('member.name')}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+                <Input
+                    placeholder={t('member.email')}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+                <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pending || !name.trim() || !email.trim()}
+                    onClick={() =>
+                        void run(() => AddUser(path, email.trim(), name.trim())).then((r) => {
+                            if (r.ok) {
+                                setName('');
+                                setEmail('');
+                                onChanged();
+                            }
+                        })
+                    }
+                >
+                    {t('userSettings.addUser')}
+                </Button>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
     );
 }
 

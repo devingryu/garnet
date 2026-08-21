@@ -21,6 +21,7 @@ import {allowedNextStatuses} from '@/lib/workflow';
 import {LINK_TYPES, linkTypeLabel} from '@/lib/links';
 import {PRIORITIES, priorityLabel} from '@/lib/priorities';
 import {memberName} from '@/lib/members';
+import {UserAvatar} from '@/components/user-avatar';
 import {formatTimestamp} from '@/lib/format';
 import {createScrollSync} from '@/lib/scroll-sync';
 import {statusCategoryClass} from '@/lib/status-style';
@@ -38,7 +39,7 @@ import {
     TransitionIssueStatus,
     UpdateIssueBody,
 } from '../../wailsjs/go/main/App';
-import type {Backlink, Issue, Project} from '@/lib/model';
+import type {Backlink, Issue, Project, User} from '@/lib/model';
 
 const UNASSIGNED = '__unassigned__';
 const ADD_MEMBER = '__add_member__';
@@ -69,6 +70,7 @@ export function IssueDetailPanel({
     issue,
     issues,
     project,
+    users,
     referencedBy,
     mutate,
     onOpenDocument,
@@ -80,6 +82,7 @@ export function IssueDetailPanel({
     /** The whole workspace's issues, for the Parent/Links pickers to search over. */
     issues: Issue[];
     project: Project | undefined;
+    users: User[];
     referencedBy: Backlink[];
     /** Runs a write and re-reads the workspace; resolves false if it failed. */
     mutate: (action: (path: string) => Promise<unknown>) => Promise<boolean>;
@@ -379,8 +382,15 @@ export function IssueDetailPanel({
                                 </SelectContent>
                             </Select>
                         ) : (
-                            <span className="text-sm">
-                                {memberName(project, issue.assignee) || t('issue.unassigned')}
+                            <span className="flex items-center gap-1.5 text-sm">
+                                {issue.assignee && (
+                                    <UserAvatar
+                                        email={issue.assignee}
+                                        name={memberName(project, issue.assignee, users)}
+                                    />
+                                )}
+                                {memberName(project, issue.assignee, users) ||
+                                    t('issue.unassigned')}
                             </span>
                         )}
                     </Field>
@@ -565,8 +575,13 @@ export function IssueDetailPanel({
                                       })
                                     : entry.body}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                                {memberName(project, entry.by)} ·{' '}
+                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <UserAvatar
+                                    email={entry.by}
+                                    name={memberName(project, entry.by, users)}
+                                    size={14}
+                                />
+                                {memberName(project, entry.by, users)} ·{' '}
                                 {formatTimestamp(entry.at, i18n.language)}
                             </p>
                         </div>

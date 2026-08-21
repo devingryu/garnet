@@ -233,7 +233,13 @@
   },
   "userSettings": {
     "heading": "Profiles",
+    "section": {
+      "profiles": "Profiles",
+      "people": "People"
+    },
     "addProfile": "Add profile",
-    "noProfiles": "No profiles saved yet."
+    "noProfiles": "No profiles saved yet.",
+    "addUser": "Add person",
+    "noUsers": "No one registered yet."
   }
 }

@@ -15,6 +15,7 @@ export function DocumentEditorPanel({
     path,
     docPath,
     referencedBy,
+    mutate,
     onSave,
     onOpenIssue,
     onOpenDocument,
@@ -23,16 +24,18 @@ export function DocumentEditorPanel({
     path: string;
     docPath: string;
     referencedBy: Backlink[];
+    /** Runs a write and re-reads the workspace; resolves false if it failed. */
+    mutate: (action: (path: string) => Promise<unknown>) => Promise<boolean>;
     /** Resolves true when the write landed, so the panel knows what is on disk. */
     onSave: (content: string) => Promise<boolean>;
     onOpenIssue: (id: string) => void;
     onOpenDocument: (path: string) => void;
-    /** Runs after DeleteDocument succeeds — closes this document's tab and
-     *  reloads the workspace (GARNET-4). */
+    /** Runs after DeleteDocument succeeds — closes this document's tab.
+     *  The workspace reload itself already happens inside `mutate`. */
     onDeleted: () => void;
 }) {
     const {t} = useTranslation();
-    const {run, error, pending} = useAsyncAction();
+    const {run, error} = useAsyncAction();
     const [content, setContent] = useState('');
     // What the last successful read or write put on disk — the baseline that
     // decides whether a blur has anything to save. null until the first read
@@ -40,6 +43,7 @@ export function DocumentEditorPanel({
     const [onDisk, setOnDisk] = useState<string | null>(null);
     const [mode, setMode] = useState<MarkdownViewMode>('raw');
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     // docPath is workspace-root-relative (e.g. "decisions/0001-x.md"); a
     // link in it resolves against its own directory, same as sourceDir for
@@ -146,15 +150,17 @@ export function DocumentEditorPanel({
                 onOpenChange={setDeleteOpen}
                 title={t('document.deleteConfirmTitle')}
                 description={t('document.deleteConfirmBody')}
-                pending={pending}
-                onConfirm={() =>
-                    void run(() => DeleteDocument(path, docPath)).then((r) => {
-                        if (r.ok) {
+                pending={deleting}
+                onConfirm={() => {
+                    setDeleting(true);
+                    void mutate((path) => DeleteDocument(path, docPath)).then((ok) => {
+                        setDeleting(false);
+                        if (ok) {
                             setDeleteOpen(false);
                             onDeleted();
                         }
-                    })
-                }
+                    });
+                }}
             />
         </div>
     );

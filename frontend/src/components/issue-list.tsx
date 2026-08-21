@@ -1,15 +1,18 @@
 import {useTranslation} from 'react-i18next';
 import {memberName} from '@/lib/members';
 import {priorityLabel} from '@/lib/priorities';
-import type {Issue, Project} from '@/lib/model';
+import {UserAvatar} from '@/components/user-avatar';
+import type {Issue, Project, User} from '@/lib/model';
 
 export function IssueList({
     issues,
     project,
+    users,
     onSelect,
 }: {
     issues: Issue[];
     project: Project;
+    users: User[];
     onSelect: (id: string) => void;
 }) {
     const {t} = useTranslation();
@@ -32,7 +35,18 @@ export function IssueList({
                     <span className="ml-2 text-muted-foreground">
                         {issue.id} · {issue.type} · {issue.status || t('common.empty')}
                         {issue.priority && <> · {priorityLabel(t, issue.priority)}</>}
-                        {issue.assignee && <> · {memberName(project, issue.assignee)}</>}
+                        {issue.assignee && (
+                            <>
+                                {' · '}
+                                <UserAvatar
+                                    email={issue.assignee}
+                                    name={memberName(project, issue.assignee, users)}
+                                    size={14}
+                                    className="mb-[-2px]"
+                                />{' '}
+                                {memberName(project, issue.assignee, users)}
+                            </>
+                        )}
                         {issue.parent && <> · {t('issues.childOf', {parent: issue.parent})}</>}
                         {issue.todos.length > 0 && (
                             <>

@@ -171,11 +171,6 @@ func (a *App) AddTimelineNote(path, issueID, body string) (*workspace.Issue, err
 	return coded(workspace.AddTimelineNote(path, issueID, body))
 }
 
-// ListUsers returns the workspace's shared user registry.
-func (a *App) ListUsers(path string) ([]workspace.User, error) {
-	return coded(workspace.LoadUsers(path))
-}
-
 // AddUser registers a display name against an email in the workspace's
 // shared user registry.
 func (a *App) AddUser(path, email, name string) (*workspace.User, error) {

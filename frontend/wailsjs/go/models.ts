@@ -484,6 +484,7 @@ export namespace workspace {
 	    projects: Project[];
 	    issues: Issue[];
 	    documents: Document[];
+	    users: User[];
 	    backlinks: BacklinkEntry[];
 	    warnings: string[];
 	
@@ -497,6 +498,7 @@ export namespace workspace {
 	        this.projects = this.convertValues(source["projects"], Project);
 	        this.issues = this.convertValues(source["issues"], Issue);
 	        this.documents = this.convertValues(source["documents"], Document);
+	        this.users = this.convertValues(source["users"], User);
 	        this.backlinks = this.convertValues(source["backlinks"], BacklinkEntry);
 	        this.warnings = source["warnings"];
 	    }

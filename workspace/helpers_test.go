@@ -35,6 +35,19 @@ func copyFixture(t *testing.T, name string) string {
 	return dst
 }
 
+// writeTestFile writes content to relPath under root, creating any missing
+// parent directories.
+func writeTestFile(t *testing.T, root, relPath, content string) {
+	t.Helper()
+	abs := filepath.Join(root, relPath)
+	if err := os.MkdirAll(filepath.Dir(abs), 0o755); err != nil {
+		t.Fatalf("creating directories for %q: %v", relPath, err)
+	}
+	if err := os.WriteFile(abs, []byte(content), 0o644); err != nil {
+		t.Fatalf("writing %q: %v", relPath, err)
+	}
+}
+
 func copyFile(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {

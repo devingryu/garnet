@@ -42,8 +42,6 @@ export function GitStatus(arg1:string):Promise<workspace.GitStatus>;
 
 export function ListProfiles():Promise<Array<workspace.Profile>>;
 
-export function ListUsers(arg1:string):Promise<Array<workspace.User>>;
-
 export function OpenWorkspace(arg1:string):Promise<workspace.Workspace>;
 
 export function ReadDocument(arg1:string,arg2:string):Promise<string>;

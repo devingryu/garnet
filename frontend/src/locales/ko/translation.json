@@ -232,7 +232,13 @@
   },
   "userSettings": {
     "heading": "프로필",
+    "section": {
+      "profiles": "프로필",
+      "people": "구성원"
+    },
     "addProfile": "프로필 추가",
-    "noProfiles": "저장된 프로필이 없습니다."
+    "noProfiles": "저장된 프로필이 없습니다.",
+    "addUser": "구성원 추가",
+    "noUsers": "등록된 구성원이 없습니다."
   }
 }

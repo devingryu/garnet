@@ -82,10 +82,6 @@ export function ListProfiles() {
   return window['go']['main']['App']['ListProfiles']();
 }
 
-export function ListUsers(arg1) {
-  return window['go']['main']['App']['ListUsers'](arg1);
-}
-
 export function OpenWorkspace(arg1) {
   return window['go']['main']['App']['OpenWorkspace'](arg1);
 }

@@ -87,6 +87,27 @@ func resolveLinkTarget(root, sourceDir, link string) (kind, id string, ok bool) 
 func buildLinkIndex(root string, issues []Issue, documents []Document) ([]BacklinkEntry, []string) {
 	type key struct{ kind, id string }
 	index := map[key][]Backlink{}
+	// seen dedupes a (target, source) pair — a document linking the same
+	// target twice (two links in one paragraph, or a link repeated further
+	// down) is still one backlink, not one per occurrence.
+	seen := map[key]map[key]bool{}
+	var warnings []string
+
+	// validIssues/validDocuments back GARNET-28: a link can be shaped like
+	// a real issue or document reference (resolveLinkTarget says ok) and
+	// still point at nothing, most often because the document it named was
+	// moved, renamed, or deleted out from under it. There's no move/rename
+	// operation that rewrites links (that's the harder half of GARNET-28,
+	// still open) — this is the cheap half: surface what broke instead of
+	// letting it drop out of the backlink index with no signal.
+	validIssues := make(map[string]bool, len(issues))
+	for _, issue := range issues {
+		validIssues[issue.ID] = true
+	}
+	validDocuments := make(map[string]bool, len(documents))
+	for _, doc := range documents {
+		validDocuments[doc.Path] = true
+	}
 
 	addLinks := func(sourceKind, sourceID, sourceDir, content string) {
 		for _, link := range extractLinks(content) {
@@ -97,7 +118,23 @@ func buildLinkIndex(root string, issues []Issue, documents []Document) ([]Backli
 			if targetKind == sourceKind && targetID == sourceID {
 				continue // ignore self-links
 			}
+			exists := (targetKind == "issue" && validIssues[targetID]) ||
+				(targetKind == "document" && validDocuments[targetID])
+			if !exists {
+				warnings = append(warnings, fmt.Sprintf(
+					"%s %q links to %s %q, which doesn't exist (a moved, renamed, or deleted target?)",
+					sourceKind, sourceID, targetKind, targetID))
+				continue
+			}
 			k := key{targetKind, targetID}
+			source := key{sourceKind, sourceID}
+			if seen[k] == nil {
+				seen[k] = map[key]bool{}
+			}
+			if seen[k][source] {
+				continue
+			}
+			seen[k][source] = true
 			index[k] = append(index[k], Backlink{Kind: sourceKind, ID: sourceID})
 		}
 	}
@@ -106,7 +143,6 @@ func buildLinkIndex(root string, issues []Issue, documents []Document) ([]Backli
 		addLinks("issue", issue.ID, filepath.Join("issues", issue.ID), issue.Description)
 	}
 
-	var warnings []string
 	for _, doc := range documents {
 		raw, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(doc.Path)))
 		if err != nil {

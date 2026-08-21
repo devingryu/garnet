@@ -17,6 +17,9 @@ type Workspace struct {
 	Projects  []Project  `json:"projects"`
 	Issues    []Issue    `json:"issues"`
 	Documents []Document `json:"documents"`
+	// Users is the registry from users.yaml (ADR 0009) — display names and
+	// external links for reporter/assignee/timeline actors.
+	Users []User `json:"users"`
 	// Backlinks is derived by scanning markdown links, never stored — see
 	// ADR 0004 and buildLinkIndex.
 	Backlinks []BacklinkEntry `json:"backlinks"`
@@ -53,6 +56,7 @@ func Open(root string) (*Workspace, error) {
 		Projects:  []Project{},
 		Issues:    []Issue{},
 		Documents: []Document{},
+		Users:     []User{},
 		Backlinks: []BacklinkEntry{},
 		Warnings:  []string{},
 	}
@@ -93,6 +97,12 @@ func Open(root string) (*Workspace, error) {
 		return nil, fmt.Errorf("listing documents: %w", err)
 	}
 	ws.Documents = documents
+
+	users, err := loadUsers(root)
+	if err != nil {
+		return nil, fmt.Errorf("loading users.yaml: %w", err)
+	}
+	ws.Users = users
 
 	entries, linkWarnings := buildLinkIndex(root, ws.Issues, ws.Documents)
 	ws.Backlinks = entries

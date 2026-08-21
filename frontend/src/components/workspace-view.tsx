@@ -412,6 +412,7 @@ export function WorkspaceView() {
                                     (i) => i.projectKey === issuesTabProject.key
                                 )}
                                 project={issuesTabProject}
+                                users={ws.users}
                                 onSelect={openIssue}
                             />
                         )}
@@ -425,6 +426,7 @@ export function WorkspaceView() {
                             issue={openedIssue}
                             issues={ws.issues}
                             project={ws.projects.find((p) => p.key === openedIssue.projectKey)}
+                            users={ws.users}
                             referencedBy={backlinksFor(ws, 'issue', openedIssue.id)}
                             mutate={mutate}
                             onOpenDocument={openDocument}
@@ -445,6 +447,7 @@ export function WorkspaceView() {
                         path={path}
                         docPath={documentTab.docPath}
                         referencedBy={backlinksFor(ws, 'document', documentTab.docPath)}
+                        mutate={mutate}
                         onSave={(content) =>
                             mutate((p) => WriteDocument(p, documentTab.docPath, content))
                         }
@@ -510,6 +513,8 @@ export function WorkspaceView() {
                     open={userSettingsOpen}
                     onOpenChange={setUserSettingsOpen}
                     onActiveProfileChanged={setIdentity}
+                    users={ws.users}
+                    onUsersChanged={() => void reload()}
                 />
             </div>
         </AppShell>
