@@ -43,6 +43,45 @@ browser isn't installed yet:
 bunx playwright install chromium
 ```
 
+## Iterating: keep `wails dev` alive across runs
+
+`playwright.config.ts`'s `webServer.reuseExistingServer` re-attaches to an
+already-running `wails dev` instead of booting a fresh one — cutting a run
+from ~60s to a few seconds. That only pays off if the server actually
+survives between test invocations, and running it through a shell pipe
+kills that: `bunx playwright test ... | tail -80` (or any pipe) leaves
+`wails dev`'s stdout writing into that pipe, and once the reading process
+exits — a backgrounded bash tool call ending, `tail` closing — the next
+write hits a closed pipe and `wails dev` dies with `EPIPE`. The next test
+run then pays the full ~60s boot cost again, with no visible reason why.
+
+While iterating on a spec file (not doing a final full-suite check), start
+one long enough-lived, unpiped `wails dev` yourself and point every
+subsequent run at it:
+
+```bash
+cd repos/garnet
+GARNET_RECENT_WORKSPACES_PATH=/tmp/garnet-e2e-recent-workspaces.json \
+GARNET_PROFILES_PATH=/tmp/garnet-e2e-profiles.json \
+nohup ~/go/bin/wails dev > /tmp/wails-dev-e2e.log 2>&1 &
+disown
+```
+
+Redirecting to a real file, not a pipe, is what lets it survive. Then run
+just the spec you're changing, also redirected to a file rather than piped:
+
+```bash
+cd frontend
+bunx playwright test your-new.spec.ts > /tmp/pw.log 2>&1; tail -60 /tmp/pw.log
+```
+
+Each rerun during iteration should land in a few seconds, not a minute.
+Kill the standalone server (`pkill -f "wails dev"`) once you're done, and
+run the full suite (`bun run test:e2e`, which manages its own server via
+`webServer`) as the final check before considering the change verified —
+the standalone server above is a fast inner loop, not a substitute for that
+full pass.
+
 ## Writing a test
 
 - Put spec files in `frontend/e2e/`, named `*.spec.ts`.
