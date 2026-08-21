@@ -16,44 +16,49 @@ import (
 // raw text as detail — inventing a code for every os.ReadFile failure would
 // be a translation catalog nobody can maintain.
 const (
-	CodeNotAWorkspace         = "not_a_workspace"
-	CodeIssueNotFound         = "issue_not_found"
-	CodeProjectLoadFailed     = "project_load_failed"
-	CodeTitleRequired         = "title_required"
-	CodeNoteBodyRequired      = "note_body_required"
-	CodeIdentityRequired      = "identity_required"
-	CodeIssueTypeNotDeclared  = "issue_type_not_declared"
-	CodeStatusNotDeclared     = "status_not_declared"
-	CodeInvalidTransition     = "invalid_transition"
-	CodeNotAProjectMember     = "not_a_project_member"
-	CodeMemberAlreadyExists   = "member_already_exists"
-	CodeParentNotFound        = "parent_not_found"
-	CodeLinkTargetNotFound    = "link_target_not_found"
-	CodeTransitionUnknown     = "transition_unknown_status"
-	CodeRepoPathTaken         = "repo_path_taken"
-	CodeRepoNotDeclared       = "repo_not_declared"
-	CodeDocumentPathInvalid   = "document_path_invalid"
-	CodeDocumentNotMarkdown   = "document_not_markdown"
-	CodeDocumentPathReserved  = "document_path_reserved"
-	CodeDocumentUnreadable    = "document_unreadable"
-	CodeDocumentNotFound      = "document_not_found"
-	CodeTodoNotFound          = "todo_not_found"
-	CodeProjectKeyRequired    = "project_key_required"
-	CodeProjectKeyInvalid     = "project_key_invalid"
-	CodeProjectNameRequired   = "project_name_required"
-	CodeProjectAlreadyExists  = "project_already_exists"
-	CodeInvalidPriority       = "invalid_priority"
-	CodeNotAGitRepo           = "not_a_git_repo"
-	CodeGitNoUpstream         = "git_no_upstream"
-	CodeCommitMessageRequired = "commit_message_required"
-	CodeProfileNameRequired   = "profile_name_required"
-	CodeProfileEmailRequired  = "profile_email_required"
-	CodeProfileAlreadyExists  = "profile_already_exists"
-	CodeProfileNotFound       = "profile_not_found"
-	CodeUserEmailRequired     = "user_email_required"
-	CodeUserNameRequired      = "user_name_required"
-	CodeUserAlreadyExists     = "user_already_exists"
-	CodeUserNotFound          = "user_not_found"
+	CodeNotAWorkspace          = "not_a_workspace"
+	CodeIssueNotFound          = "issue_not_found"
+	CodeProjectLoadFailed      = "project_load_failed"
+	CodeTitleRequired          = "title_required"
+	CodeNoteBodyRequired       = "note_body_required"
+	CodeIdentityRequired       = "identity_required"
+	CodeIssueTypeNotDeclared   = "issue_type_not_declared"
+	CodeStatusNotDeclared      = "status_not_declared"
+	CodeInvalidTransition      = "invalid_transition"
+	CodeNotAProjectMember      = "not_a_project_member"
+	CodeMemberAlreadyExists    = "member_already_exists"
+	CodeParentNotFound         = "parent_not_found"
+	CodeLinkTargetNotFound     = "link_target_not_found"
+	CodeTransitionUnknown      = "transition_unknown_status"
+	CodeRepoPathTaken          = "repo_path_taken"
+	CodeRepoNotDeclared        = "repo_not_declared"
+	CodeDocumentPathInvalid    = "document_path_invalid"
+	CodeDocumentNotMarkdown    = "document_not_markdown"
+	CodeDocumentPathReserved   = "document_path_reserved"
+	CodeDocumentUnreadable     = "document_unreadable"
+	CodeDocumentNotFound       = "document_not_found"
+	CodeTodoNotFound           = "todo_not_found"
+	CodeProjectKeyRequired     = "project_key_required"
+	CodeProjectKeyInvalid      = "project_key_invalid"
+	CodeProjectNameRequired    = "project_name_required"
+	CodeProjectAlreadyExists   = "project_already_exists"
+	CodeInvalidPriority        = "invalid_priority"
+	CodeNotAGitRepo            = "not_a_git_repo"
+	CodeGitNoUpstream          = "git_no_upstream"
+	CodeCommitMessageRequired  = "commit_message_required"
+	CodeProfileNameRequired    = "profile_name_required"
+	CodeProfileEmailRequired   = "profile_email_required"
+	CodeProfileAlreadyExists   = "profile_already_exists"
+	CodeProfileNotFound        = "profile_not_found"
+	CodeUserEmailRequired      = "user_email_required"
+	CodeUserNameRequired       = "user_name_required"
+	CodeUserAlreadyExists      = "user_already_exists"
+	CodeUserNotFound           = "user_not_found"
+	CodeDuplicateStatusID      = "duplicate_status_id"
+	CodeInvalidStatusCategory  = "invalid_status_category"
+	CodeStatusIDRequired       = "status_id_required"
+	CodeIssueTypeRequired      = "issue_type_required"
+	CodeIssueTypeAlreadyExists = "issue_type_already_exists"
 )
 
 // CodedError is a failure the UI is expected to show to a person. Code says
@@ -382,5 +387,37 @@ func errUserNotFound(email string) error {
 		Code:    CodeUserNotFound,
 		Params:  map[string]string{"email": email},
 		Message: fmt.Sprintf("no user registered for %q", email),
+	}
+}
+
+func errDuplicateStatusID(id string) error {
+	return &CodedError{
+		Code:    CodeDuplicateStatusID,
+		Params:  map[string]string{"id": id},
+		Message: fmt.Sprintf("status id %q is declared more than once", id),
+	}
+}
+
+func errInvalidStatusCategory(category string) error {
+	return &CodedError{
+		Code:    CodeInvalidStatusCategory,
+		Params:  map[string]string{"category": category},
+		Message: fmt.Sprintf("%q is not a recognized status category", category),
+	}
+}
+
+func errStatusIDRequired() error {
+	return &CodedError{Code: CodeStatusIDRequired, Message: "status id is required"}
+}
+
+func errIssueTypeRequired() error {
+	return &CodedError{Code: CodeIssueTypeRequired, Message: "issue type is required"}
+}
+
+func errIssueTypeAlreadyExists(issueType, projectKey string) error {
+	return &CodedError{
+		Code:    CodeIssueTypeAlreadyExists,
+		Params:  map[string]string{"type": issueType, "project": projectKey},
+		Message: fmt.Sprintf("issue type %q already exists on project %q", issueType, projectKey),
 	}
 }

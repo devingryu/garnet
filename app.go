@@ -202,9 +202,38 @@ func (a *App) DeleteDocument(path, relPath string) error {
 	return codedOnly(workspace.DeleteDocument(path, relPath))
 }
 
+// SetProjectName renames a project's display name.
+func (a *App) SetProjectName(path, projectKey, name string) (*workspace.Project, error) {
+	return coded(workspace.SetProjectName(path, projectKey, name))
+}
+
 // SetProjectIssueTypes replaces a project's declared issue types.
 func (a *App) SetProjectIssueTypes(path, projectKey string, types []string) (*workspace.Project, error) {
 	return coded(workspace.SetProjectIssueTypes(path, projectKey, types))
+}
+
+// RenameIssueType renames an issue type and rewrites every issue currently
+// holding the old value.
+func (a *App) RenameIssueType(path, projectKey, oldType, newType string) (*workspace.Project, error) {
+	return coded(workspace.RenameIssueType(path, projectKey, oldType, newType))
+}
+
+// CountIssuesByType reports how many of projectKey's issues currently have
+// issueType — the count a rename confirmation names before committing.
+func (a *App) CountIssuesByType(path, projectKey, issueType string) (int, error) {
+	return coded(workspace.CountIssuesByType(path, projectKey, issueType))
+}
+
+// RenameStatus renames a workflow status and rewrites every issue currently
+// in it.
+func (a *App) RenameStatus(path, projectKey, oldID, newID string) (*workspace.Project, error) {
+	return coded(workspace.RenameStatus(path, projectKey, oldID, newID))
+}
+
+// CountIssuesByStatus reports how many of projectKey's issues currently
+// have statusID — the count a rename confirmation names before committing.
+func (a *App) CountIssuesByStatus(path, projectKey, statusID string) (int, error) {
+	return coded(workspace.CountIssuesByStatus(path, projectKey, statusID))
 }
 
 // SetWorkflow replaces a project's workflow.md.

@@ -17,8 +17,9 @@ test('migrates the legacy identity into a profile, and switching active profile 
     const workspacePath = makeFixtureWorkspace();
     await openWorkspace(page, workspacePath);
 
-    await page.getByRole('button', {name: 'Profiles'}).click();
+    await page.getByRole('button', {name: 'App settings'}).click();
     const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', {name: 'Profiles'}).click();
 
     // The fixture's legacy `user: {name, email}` shape (fixtures.ts) should
     // show up as one migrated, active profile — not an empty list.

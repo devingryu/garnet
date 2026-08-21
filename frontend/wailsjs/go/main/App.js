@@ -34,6 +34,14 @@ export function CloneProjectRepos(arg1, arg2) {
   return window['go']['main']['App']['CloneProjectRepos'](arg1, arg2);
 }
 
+export function CountIssuesByStatus(arg1, arg2, arg3) {
+  return window['go']['main']['App']['CountIssuesByStatus'](arg1, arg2, arg3);
+}
+
+export function CountIssuesByType(arg1, arg2, arg3) {
+  return window['go']['main']['App']['CountIssuesByType'](arg1, arg2, arg3);
+}
+
 export function CreateIssue(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['CreateIssue'](arg1, arg2, arg3, arg4);
 }
@@ -110,6 +118,14 @@ export function RemoveUser(arg1, arg2) {
   return window['go']['main']['App']['RemoveUser'](arg1, arg2);
 }
 
+export function RenameIssueType(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['RenameIssueType'](arg1, arg2, arg3, arg4);
+}
+
+export function RenameStatus(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['RenameStatus'](arg1, arg2, arg3, arg4);
+}
+
 export function SelectWorkspaceFolder(arg1) {
   return window['go']['main']['App']['SelectWorkspaceFolder'](arg1);
 }
@@ -140,6 +156,10 @@ export function SetIssueTitle(arg1, arg2, arg3) {
 
 export function SetProjectIssueTypes(arg1, arg2, arg3) {
   return window['go']['main']['App']['SetProjectIssueTypes'](arg1, arg2, arg3);
+}
+
+export function SetProjectName(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetProjectName'](arg1, arg2, arg3);
 }
 
 export function SetUserLinks(arg1, arg2, arg3, arg4) {

@@ -137,22 +137,51 @@
   "settings": {
     "heading": "{{project}} settings",
     "sections": {
+      "general": "General",
       "issueTypes": "Issue types",
       "workflow": "Workflow",
       "repos": "Repos",
-      "members": "Members",
-      "archive": "Archive"
+      "members": "Members"
     },
+    "projectName": "Name",
+    "projectKey": "Key",
+    "projectKeyHint": "Prefixes every issue ID — can't be changed without renaming every issue directory, so it's fixed here.",
     "noIssueTypes": "None declared — any label is accepted.",
     "newIssueType": "New type",
+    "removeIssueType": "Remove {{type}}",
     "noWorkflow": "No workflow declared yet.",
     "statusId": "id",
     "statusName": "name",
-    "statusCategory": "category",
-    "statusTargets": "can move to (comma-separated)",
     "removeStatus": "Remove status",
     "addStatus": "Add status",
-    "saveWorkflow": "Save workflow",
+    "workflow": {
+      "orderHint": "Order is the board's column order — the top row is where every new issue starts.",
+      "boardOrderHint": "Reorder to change the board's column order and which status new issues start in.",
+      "matrixHint": "Which statuses each status can move to.",
+      "category": {
+        "open": "Open",
+        "active": "Active",
+        "closed": "Closed"
+      },
+      "entryPoint": "new issues start here",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "transitionLabel": "{{from}} can move to {{to}}",
+      "idRequired": "A status id is required.",
+      "duplicateId": "Status id \"{{id}}\" is already used by another row.",
+      "unreachable": "\"{{status}}\" has no transition leading to it — issues can only reach it by hand-editing .garnet.yaml.",
+      "terminal": "\"{{status}}\" has no outgoing transition — normal for a status like Done.",
+      "deleteTitle": "Remove this status?",
+      "deleteBody_one": "{{count}} issue is currently in this status and will keep it as an undeclared value.",
+      "deleteBody_other": "{{count}} issues are currently in this status and will keep it as an undeclared value."
+    },
+    "rename": {
+      "title": "Rename and update issues?",
+      "body_one": "{{count}} issue currently has the old value and will be updated to match.",
+      "body_other": "{{count}} issues currently have the old value and will be updated to match.",
+      "confirm": "Rename",
+      "renaming": "Renaming…"
+    },
     "noRepos": "No repos declared yet.",
     "repoUrl": "Git URL",
     "repoPath": "repos/<path>",
@@ -201,7 +230,12 @@
     "user_email_required": "A user email is required.",
     "user_name_required": "A user name is required.",
     "user_already_exists": "A user is already registered for {{email}}.",
-    "user_not_found": "No user registered for {{email}}."
+    "user_not_found": "No user registered for {{email}}.",
+    "duplicate_status_id": "Status id \"{{id}}\" is declared more than once.",
+    "invalid_status_category": "\"{{category}}\" isn't a recognized status category.",
+    "status_id_required": "A status id is required.",
+    "issue_type_required": "An issue type is required.",
+    "issue_type_already_exists": "\"{{type}}\" already exists on project \"{{project}}\"."
   },
   "markdownView": {
     "raw": "Raw",
@@ -232,14 +266,20 @@
     }
   },
   "userSettings": {
-    "heading": "Profiles",
-    "section": {
-      "profiles": "Profiles",
-      "people": "People"
-    },
     "addProfile": "Add profile",
     "noProfiles": "No profiles saved yet.",
     "addUser": "Add person",
     "noUsers": "No one registered yet."
+  },
+  "appSettings": {
+    "heading": "App settings",
+    "section": {
+      "general": "General",
+      "profiles": "Profiles",
+      "people": "People"
+    }
+  },
+  "projectSettings": {
+    "trigger": "Project settings"
   }
 }

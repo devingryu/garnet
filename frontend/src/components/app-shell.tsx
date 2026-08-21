@@ -1,7 +1,6 @@
 import type {CSSProperties, ReactNode} from 'react';
 import {Settings, UserCircle} from 'lucide-react';
 import {useTranslation} from 'react-i18next';
-import {LanguageSelect} from '@/components/language-select';
 
 const drag = {'--wails-draggable': 'drag'} as CSSProperties;
 const noDrag = {'--wails-draggable': 'no-drag'} as CSSProperties;
@@ -24,10 +23,11 @@ export function AppShell({
     toolbar?: ReactNode;
     /** Rendered as a row of open tabs between the toolbar and the content body. */
     tabBar?: ReactNode;
-    /** Called when the sidebar's (per-project) settings icon is clicked. */
+    /** Called when the sidebar's Project settings icon is clicked. */
     onSettingsClick?: () => void;
-    /** Called when the sidebar's user-settings icon is clicked — profiles
-     *  (GARNET-6), app-level rather than per-project. */
+    /** Called when the sidebar's App settings icon is clicked — language,
+     *  profiles (GARNET-6), and people (GARNET-16/30), all app/workspace
+     *  scoped rather than per-project (GARNET-26). */
     onUserSettingsClick?: () => void;
 }) {
     const {t} = useTranslation();
@@ -39,20 +39,17 @@ export function AppShell({
                 <div className="sidebar-glass-draghandle" style={drag} />
                 {sidebarTop && <div className="sidebar-project-switcher">{sidebarTop}</div>}
                 <nav className="sidebar-nav">{sidebarBody}</nav>
-                <div className="flex shrink-0 items-center gap-1 p-2" style={noDrag}>
-                    <div className="min-w-0 flex-1">
-                        <LanguageSelect />
-                    </div>
+                <div className="flex shrink-0 items-center justify-end gap-1 p-2" style={noDrag}>
                     <button
                         onClick={onUserSettingsClick}
-                        aria-label={t('userSettings.heading')}
+                        aria-label={t('appSettings.heading')}
                         className="flex shrink-0 items-center justify-center rounded-sm p-1.5 text-foreground/80 hover:bg-muted"
                     >
                         <UserCircle className="size-4" />
                     </button>
                     <button
                         onClick={onSettingsClick}
-                        aria-label={t('app.settings')}
+                        aria-label={t('projectSettings.trigger')}
                         className="flex shrink-0 items-center justify-center rounded-sm p-1.5 text-foreground/80 hover:bg-muted"
                     >
                         <Settings className="size-4" />

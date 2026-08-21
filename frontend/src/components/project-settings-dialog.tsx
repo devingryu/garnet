@@ -5,52 +5,42 @@ import {cn} from '@/lib/utils';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {ConfirmDeleteDialog} from '@/components/confirm-delete-dialog';
+import {RenameConfirmDialog} from '@/components/rename-confirm-dialog';
+import {WorkflowEditor} from '@/components/workflow-editor';
 import {useAsyncAction} from '@/lib/use-async-action';
 import {
     AddProjectMember,
     AddProjectRepo,
     ArchiveProject,
     CloneProjectRepos,
+    CountIssuesByType,
     RemoveProjectRepo,
+    RenameIssueType,
     SetProjectIssueTypes,
-    SetWorkflow,
+    SetProjectName,
     UnarchiveProject,
 } from '../../wailsjs/go/main/App';
-import type {CloneResult, Project, Status, Transition, Workflow} from '@/lib/model';
+import type {CloneResult, Project, User} from '@/lib/model';
 
-export type SettingsSection = 'issueTypes' | 'workflow' | 'repos' | 'members' | 'archive';
+export type SettingsSection = 'general' | 'issueTypes' | 'workflow' | 'repos' | 'members';
 
-const SECTIONS: SettingsSection[] = ['issueTypes', 'workflow', 'repos', 'members', 'archive'];
-
-// Editable copy of a project's workflow — statuses plus a comma-separated
-// "can move to" field per status, parsed into Transition[] on save.
-interface WorkflowRow {
-    id: string;
-    name: string;
-    category: string;
-    to: string;
-}
-
-function toRows(workflow: Workflow | undefined | null): WorkflowRow[] {
-    if (!workflow) return [];
-    return workflow.statuses.map((s) => ({
-        id: s.id,
-        name: s.name,
-        category: s.category,
-        to: (workflow.transitions.find((t) => t.from === s.id)?.to ?? []).join(', '),
-    }));
-}
+const SECTIONS: SettingsSection[] = ['general', 'issueTypes', 'workflow', 'repos', 'members'];
 
 export function ProjectSettingsDialog({
     path,
     project,
+    users,
     open,
     onOpenChange,
     onSaved,
-    initialSection = 'issueTypes',
+    initialSection = 'general',
 }: {
     path: string;
     project: Project | undefined;
+    /** The workspace's users.yaml registry (GARNET-16/30) — used to
+     *  auto-fill a member's name from a matching email, nothing else. */
+    users: User[];
     open: boolean;
     onOpenChange: (open: boolean) => void;
     /** Re-reads the workspace after a successful write (AGENTS.md rule 2). */
@@ -78,6 +68,7 @@ export function ProjectSettingsDialog({
                         key={`${project.key}:${initialSection}:${String(open)}`}
                         path={path}
                         project={project}
+                        users={users}
                         initialSection={initialSection}
                         onSaved={onSaved}
                     />
@@ -90,11 +81,13 @@ export function ProjectSettingsDialog({
 function SettingsForm({
     path,
     project,
+    users,
     initialSection,
     onSaved,
 }: {
     path: string;
     project: Project;
+    users: User[];
     initialSection: SettingsSection;
     onSaved: () => void;
 }) {
@@ -102,9 +95,7 @@ function SettingsForm({
     const {run, error} = useAsyncAction();
 
     const [section, setSection] = useState<SettingsSection>(initialSection);
-    const [issueTypes, setIssueTypes] = useState<string[]>(project.issueTypes);
-    const [newType, setNewType] = useState('');
-    const [rows, setRows] = useState<WorkflowRow[]>(() => toRows(project.workflow));
+    const [name, setName] = useState(project.name);
     const [newRepoUrl, setNewRepoUrl] = useState('');
     const [newRepoPath, setNewRepoPath] = useState('');
     const [cloning, setCloning] = useState(false);
@@ -119,41 +110,6 @@ function SettingsForm({
         return result.ok;
     }
 
-    function addIssueType() {
-        const type = newType.trim();
-        if (!type || issueTypes.includes(type)) return;
-        const next = [...issueTypes, type];
-        setIssueTypes(next);
-        setNewType('');
-        void save(() => SetProjectIssueTypes(path, project.key, next));
-    }
-
-    function removeIssueType(type: string) {
-        const next = issueTypes.filter((x) => x !== type);
-        setIssueTypes(next);
-        void save(() => SetProjectIssueTypes(path, project.key, next));
-    }
-
-    function saveWorkflow() {
-        const statuses: Status[] = rows
-            .filter((r) => r.id.trim())
-            .map((r) => ({
-                id: r.id.trim(),
-                name: r.name.trim() || r.id.trim(),
-                category: r.category.trim(),
-            }));
-        const transitions: Transition[] = rows
-            .filter((r) => r.id.trim() && r.to.trim())
-            .map((r) => ({
-                from: r.id.trim(),
-                to: r.to
-                    .split(',')
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-            }));
-        void save(() => SetWorkflow(path, project.key, statuses, transitions));
-    }
-
     async function cloneRepos() {
         setCloning(true);
         setCloneResult(null);
@@ -163,6 +119,18 @@ function SettingsForm({
             onSaved();
         }
         setCloning(false);
+    }
+
+    function onMemberEmailChange(email: string) {
+        setNewMemberEmail(email);
+        // A matching users.yaml entry auto-fills the name, still editable,
+        // still a separate write from AddProjectMember — GARNET-26's light
+        // tie-in between the workspace's People registry and this
+        // project's own closed membership list (ADR 0009).
+        if (!newMemberName.trim()) {
+            const match = users.find((u) => u.email === email.trim());
+            if (match) setNewMemberName(match.name);
+        }
     }
 
     return (
@@ -185,130 +153,23 @@ function SettingsForm({
             </div>
 
             <div className="flex max-h-[60vh] flex-1 flex-col gap-3 overflow-y-auto">
+                {section === 'general' && (
+                    <GeneralSection
+                        path={path}
+                        project={project}
+                        name={name}
+                        setName={setName}
+                        onSaved={onSaved}
+                        run={run}
+                    />
+                )}
+
                 {section === 'issueTypes' && (
-                    <>
-                        <div className="flex flex-wrap gap-1.5">
-                            {issueTypes.map((type) => (
-                                <span
-                                    key={type}
-                                    className="flex items-center gap-1 rounded-sm border border-border px-2 py-0.5 text-sm"
-                                >
-                                    {type}
-                                    <button
-                                        onClick={() => removeIssueType(type)}
-                                        aria-label={t('common.remove', {name: type})}
-                                    >
-                                        <X className="size-3 text-muted-foreground" />
-                                    </button>
-                                </span>
-                            ))}
-                            {issueTypes.length === 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                    {t('settings.noIssueTypes')}
-                                </p>
-                            )}
-                        </div>
-                        <div className="flex gap-1.5">
-                            <Input
-                                placeholder={t('settings.newIssueType')}
-                                value={newType}
-                                onChange={(e) => setNewType(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && addIssueType()}
-                            />
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={!newType.trim()}
-                                onClick={addIssueType}
-                            >
-                                {t('common.add')}
-                            </Button>
-                        </div>
-                    </>
+                    <IssueTypesSection path={path} project={project} onSaved={onSaved} />
                 )}
 
                 {section === 'workflow' && (
-                    <>
-                        <div className="flex flex-col gap-1.5">
-                            {rows.map((row, i) => (
-                                <div key={i} className="flex items-center gap-1.5">
-                                    <Input
-                                        placeholder={t('settings.statusId')}
-                                        value={row.id}
-                                        onChange={(e) =>
-                                            setRows(
-                                                rows.map((r, idx) =>
-                                                    idx === i ? {...r, id: e.target.value} : r
-                                                )
-                                            )
-                                        }
-                                        className="w-20"
-                                    />
-                                    <Input
-                                        placeholder={t('settings.statusName')}
-                                        value={row.name}
-                                        onChange={(e) =>
-                                            setRows(
-                                                rows.map((r, idx) =>
-                                                    idx === i ? {...r, name: e.target.value} : r
-                                                )
-                                            )
-                                        }
-                                        className="w-24"
-                                    />
-                                    <Input
-                                        placeholder={t('settings.statusCategory')}
-                                        value={row.category}
-                                        onChange={(e) =>
-                                            setRows(
-                                                rows.map((r, idx) =>
-                                                    idx === i ? {...r, category: e.target.value} : r
-                                                )
-                                            )
-                                        }
-                                        className="w-24"
-                                    />
-                                    <Input
-                                        placeholder={t('settings.statusTargets')}
-                                        value={row.to}
-                                        onChange={(e) =>
-                                            setRows(
-                                                rows.map((r, idx) =>
-                                                    idx === i ? {...r, to: e.target.value} : r
-                                                )
-                                            )
-                                        }
-                                        className="flex-1"
-                                    />
-                                    <button
-                                        onClick={() => setRows(rows.filter((_, idx) => idx !== i))}
-                                        aria-label={t('settings.removeStatus')}
-                                    >
-                                        <X className="size-3.5 text-muted-foreground" />
-                                    </button>
-                                </div>
-                            ))}
-                            {rows.length === 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                    {t('settings.noWorkflow')}
-                                </p>
-                            )}
-                        </div>
-                        <div className="flex gap-1.5">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                    setRows([...rows, {id: '', name: '', category: '', to: ''}])
-                                }
-                            >
-                                {t('settings.addStatus')}
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={saveWorkflow}>
-                                {t('settings.saveWorkflow')}
-                            </Button>
-                        </div>
-                    </>
+                    <WorkflowEditor path={path} project={project} onSaved={onSaved} />
                 )}
 
                 {section === 'repos' && (
@@ -427,7 +288,7 @@ function SettingsForm({
                             <Input
                                 placeholder={t('member.email')}
                                 value={newMemberEmail}
-                                onChange={(e) => setNewMemberEmail(e.target.value)}
+                                onChange={(e) => onMemberEmailChange(e.target.value)}
                             />
                             <Button
                                 variant="outline"
@@ -454,27 +315,263 @@ function SettingsForm({
                     </>
                 )}
 
-                {section === 'archive' && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-fit"
-                        onClick={() =>
-                            void save(() =>
-                                project.archived
-                                    ? UnarchiveProject(path, project.key)
-                                    : ArchiveProject(path, project.key)
-                            )
-                        }
-                    >
-                        {project.archived
-                            ? t('settings.unarchiveProject')
-                            : t('settings.archiveProject')}
-                    </Button>
-                )}
-
                 {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
         </div>
+    );
+}
+
+function GeneralSection({
+    path,
+    project,
+    name,
+    setName,
+    onSaved,
+    run,
+}: {
+    path: string;
+    project: Project;
+    name: string;
+    setName: (name: string) => void;
+    onSaved: () => void;
+    run: ReturnType<typeof useAsyncAction>['run'];
+}) {
+    const {t} = useTranslation();
+
+    return (
+        <div className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs text-muted-foreground">{t('settings.projectName')}</span>
+                <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onBlur={() => {
+                        if (!name.trim() || name === project.name) return;
+                        void run(() => SetProjectName(path, project.key, name.trim())).then(
+                            (result) => {
+                                if (result.ok) onSaved();
+                            }
+                        );
+                    }}
+                />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+                <span className="text-xs text-muted-foreground">{t('settings.projectKey')}</span>
+                <Input value={project.key} disabled className="text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                    {t('settings.projectKeyHint')}
+                </span>
+            </label>
+
+            <div className="border-t border-border pt-3">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-fit"
+                    onClick={() =>
+                        void run(() =>
+                            project.archived
+                                ? UnarchiveProject(path, project.key)
+                                : ArchiveProject(path, project.key)
+                        ).then((result) => {
+                            if (result.ok) onSaved();
+                        })
+                    }
+                >
+                    {project.archived
+                        ? t('settings.unarchiveProject')
+                        : t('settings.archiveProject')}
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+interface TypeDraft {
+    key: string;
+    originalType: string;
+    type: string;
+}
+
+function draftsFrom(project: Project): TypeDraft[] {
+    return project.issueTypes.map((type, i) => ({key: `${type}:${i}`, originalType: type, type}));
+}
+
+function IssueTypesSection({
+    path,
+    project,
+    onSaved,
+}: {
+    path: string;
+    project: Project;
+    onSaved: () => void;
+}) {
+    const {t} = useTranslation();
+    const {run, error, setError} = useAsyncAction();
+    const [types, setTypes] = useState<TypeDraft[]>(() => draftsFrom(project));
+    const [newType, setNewType] = useState('');
+    const [renamePrompt, setRenamePrompt] = useState<{
+        rowKey: string;
+        oldType: string;
+        newType: string;
+        count: number;
+    } | null>(null);
+    const [renaming, setRenaming] = useState(false);
+    const [deletePrompt, setDeletePrompt] = useState<{rowKey: string; count: number} | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    async function persist(next: TypeDraft[]) {
+        const values = next.map((t) => t.type.trim()).filter(Boolean);
+        const dup = values.find((v, i) => values.indexOf(v) !== i);
+        if (dup) {
+            setError(t('settings.workflow.duplicateId', {id: dup}));
+            return false;
+        }
+        const result = await run(() => SetProjectIssueTypes(path, project.key, values));
+        if (result.ok) onSaved();
+        return result.ok;
+    }
+
+    function updateType(key: string, value: string) {
+        setTypes((prev) => prev.map((row) => (row.key === key ? {...row, type: value} : row)));
+    }
+
+    async function commitType(row: TypeDraft) {
+        const value = row.type.trim();
+        if (!row.originalType) {
+            void persist(types); // a fresh chip — plain save, not a rename
+            return;
+        }
+        if (value === row.originalType) return;
+        if (!value) {
+            setError(t('settings.workflow.idRequired'));
+            return;
+        }
+        if (types.some((r) => r.key !== row.key && r.type.trim() === value)) {
+            setError(t('settings.workflow.duplicateId', {id: value}));
+            return;
+        }
+        const result = await run(() => CountIssuesByType(path, project.key, row.originalType));
+        if (!result.ok) return;
+        setRenamePrompt({
+            rowKey: row.key,
+            oldType: row.originalType,
+            newType: value,
+            count: result.value,
+        });
+    }
+
+    async function confirmRename() {
+        if (!renamePrompt) return;
+        setRenaming(true);
+        const result = await run(() =>
+            RenameIssueType(path, project.key, renamePrompt.oldType, renamePrompt.newType)
+        );
+        setRenaming(false);
+        if (!result.ok) return;
+        setTypes((prev) =>
+            prev.map((row) =>
+                row.key === renamePrompt.rowKey ? {...row, originalType: renamePrompt.newType} : row
+            )
+        );
+        setRenamePrompt(null);
+        onSaved();
+    }
+
+    function cancelRename() {
+        if (!renamePrompt) return;
+        setTypes((prev) =>
+            prev.map((row) =>
+                row.key === renamePrompt.rowKey ? {...row, type: renamePrompt.oldType} : row
+            )
+        );
+        setRenamePrompt(null);
+    }
+
+    async function removeType(row: TypeDraft) {
+        const result = await run(() => CountIssuesByType(path, project.key, row.originalType));
+        if (!result.ok) return;
+        if (result.value > 0) {
+            setDeletePrompt({rowKey: row.key, count: result.value});
+            return;
+        }
+        await doRemove(row.key);
+    }
+
+    async function doRemove(rowKey: string) {
+        const next = types.filter((row) => row.key !== rowKey);
+        const ok = await persist(next);
+        if (ok) setTypes(next);
+    }
+
+    function addType() {
+        const value = newType.trim();
+        if (!value || types.some((row) => row.type === value)) return;
+        const next = [...types, {key: `new:${types.length}`, originalType: value, type: value}];
+        setTypes(next);
+        setNewType('');
+        void persist(next);
+    }
+
+    return (
+        <>
+            <div className="flex flex-col gap-1">
+                {types.map((row) => (
+                    <div key={row.key} className="flex items-center gap-1.5">
+                        <Input
+                            value={row.type}
+                            onChange={(e) => updateType(row.key, e.target.value)}
+                            onBlur={() => void commitType(row)}
+                            className="h-7 w-40"
+                        />
+                        <button
+                            onClick={() => void removeType(row)}
+                            aria-label={t('settings.removeIssueType', {type: row.type})}
+                        >
+                            <X className="size-3 text-muted-foreground" />
+                        </button>
+                    </div>
+                ))}
+                {types.length === 0 && (
+                    <p className="text-sm text-muted-foreground">{t('settings.noIssueTypes')}</p>
+                )}
+            </div>
+            <div className="flex gap-1.5">
+                <Input
+                    placeholder={t('settings.newIssueType')}
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addType()}
+                />
+                <Button variant="outline" size="sm" disabled={!newType.trim()} onClick={addType}>
+                    {t('common.add')}
+                </Button>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <RenameConfirmDialog
+                open={renamePrompt !== null}
+                onOpenChange={(o) => !o && cancelRename()}
+                count={renamePrompt?.count ?? 0}
+                pending={renaming}
+                onConfirm={() => void confirmRename()}
+            />
+            <ConfirmDeleteDialog
+                open={deletePrompt !== null}
+                onOpenChange={(o) => !o && setDeletePrompt(null)}
+                title={t('settings.workflow.deleteTitle')}
+                description={t('settings.workflow.deleteBody', {count: deletePrompt?.count ?? 0})}
+                pending={deleting}
+                onConfirm={() => {
+                    if (!deletePrompt) return;
+                    setDeleting(true);
+                    void doRemove(deletePrompt.rowKey).then(() => {
+                        setDeleting(false);
+                        setDeletePrompt(null);
+                    });
+                }}
+            />
+        </>
     );
 }

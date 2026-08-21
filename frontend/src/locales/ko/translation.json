@@ -136,22 +136,49 @@
   "settings": {
     "heading": "{{project}} 설정",
     "sections": {
+      "general": "일반",
       "issueTypes": "이슈 유형",
       "workflow": "워크플로",
       "repos": "저장소",
-      "members": "구성원",
-      "archive": "보관"
+      "members": "구성원"
     },
+    "projectName": "이름",
+    "projectKey": "키",
+    "projectKeyHint": "모든 이슈 ID의 접두어입니다 — 변경하려면 모든 이슈 디렉터리 이름을 바꿔야 하므로 여기서는 고정되어 있습니다.",
     "noIssueTypes": "선언된 유형이 없습니다 — 아무 값이나 허용됩니다.",
     "newIssueType": "새 유형",
+    "removeIssueType": "{{type}} 제거",
     "noWorkflow": "아직 선언된 워크플로가 없습니다.",
     "statusId": "id",
     "statusName": "이름",
-    "statusCategory": "분류",
-    "statusTargets": "이동 가능한 상태 (쉼표로 구분)",
     "removeStatus": "상태 제거",
     "addStatus": "상태 추가",
-    "saveWorkflow": "워크플로 저장",
+    "workflow": {
+      "orderHint": "순서가 보드의 컬럼 순서입니다 — 맨 위 행이 새 이슈가 시작되는 상태입니다.",
+      "boardOrderHint": "순서를 바꾸면 보드의 컬럼 순서와 새 이슈가 시작되는 상태가 바뀝니다.",
+      "matrixHint": "각 상태가 이동할 수 있는 상태입니다.",
+      "category": {
+        "open": "열림",
+        "active": "진행 중",
+        "closed": "닫힘"
+      },
+      "entryPoint": "새 이슈가 여기서 시작",
+      "moveUp": "위로 이동",
+      "moveDown": "아래로 이동",
+      "transitionLabel": "{{from}}에서 {{to}}로 이동 가능",
+      "idRequired": "상태 id를 입력해야 합니다.",
+      "duplicateId": "상태 id \"{{id}}\"는 다른 행에서 이미 사용 중입니다.",
+      "unreachable": "\"{{status}}\"로 이동하는 전이가 없습니다 — .garnet.yaml을 직접 편집해야만 이 상태에 도달할 수 있습니다.",
+      "terminal": "\"{{status}}\"는 나가는 전이가 없습니다 — Done 같은 상태라면 정상입니다.",
+      "deleteTitle": "이 상태를 제거할까요?",
+      "deleteBody_other": "현재 {{count}}개의 이슈가 이 상태이며, 선언되지 않은 값으로 남게 됩니다."
+    },
+    "rename": {
+      "title": "이름을 변경하고 이슈도 업데이트할까요?",
+      "body_other": "현재 {{count}}개의 이슈가 이전 값을 가지고 있으며, 함께 업데이트됩니다.",
+      "confirm": "이름 변경",
+      "renaming": "이름 변경 중…"
+    },
     "noRepos": "아직 선언된 저장소가 없습니다.",
     "repoUrl": "Git URL",
     "repoPath": "repos/<경로>",
@@ -200,7 +227,12 @@
     "user_email_required": "사용자 이메일을 입력해야 합니다.",
     "user_name_required": "사용자 이름을 입력해야 합니다.",
     "user_already_exists": "{{email}}로 등록된 사용자가 이미 있습니다.",
-    "user_not_found": "{{email}}로 등록된 사용자가 없습니다."
+    "user_not_found": "{{email}}로 등록된 사용자가 없습니다.",
+    "duplicate_status_id": "상태 id \"{{id}}\"가 중복 선언되었습니다.",
+    "invalid_status_category": "\"{{category}}\"는 인식할 수 있는 상태 카테고리가 아닙니다.",
+    "status_id_required": "상태 id를 입력해야 합니다.",
+    "issue_type_required": "이슈 타입을 입력해야 합니다.",
+    "issue_type_already_exists": "\"{{type}}\"은 프로젝트 \"{{project}}\"에 이미 존재합니다."
   },
   "markdownView": {
     "raw": "원문",
@@ -231,14 +263,20 @@
     }
   },
   "userSettings": {
-    "heading": "프로필",
-    "section": {
-      "profiles": "프로필",
-      "people": "구성원"
-    },
     "addProfile": "프로필 추가",
     "noProfiles": "저장된 프로필이 없습니다.",
     "addUser": "구성원 추가",
     "noUsers": "등록된 구성원이 없습니다."
+  },
+  "appSettings": {
+    "heading": "앱 설정",
+    "section": {
+      "general": "일반",
+      "profiles": "프로필",
+      "people": "구성원"
+    }
+  },
+  "projectSettings": {
+    "trigger": "프로젝트 설정"
   }
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 )
 
@@ -108,7 +109,51 @@ func Open(root string) (*Workspace, error) {
 	ws.Backlinks = entries
 	ws.Warnings = append(ws.Warnings, linkWarnings...)
 
+	ws.Warnings = append(ws.Warnings, undeclaredFieldWarnings(ws.Projects, ws.Issues)...)
+
 	return ws, nil
+}
+
+// undeclaredFieldWarnings flags an issue whose status or type its own
+// project no longer declares — the state a status/issue-type rename or
+// delete can leave behind if it isn't (or can't be, for a hand-edited
+// project.md/workflow.md) rewritten across every issue holding the old
+// value. Same tolerance as GARNET-28's dangling links: not an error, just
+// something worth a warning banner. A project with no workflow at all
+// isn't flagged — nothing is declared, so nothing can be undeclared.
+func undeclaredFieldWarnings(projects []Project, issues []Issue) []string {
+	byKey := make(map[string]*Project, len(projects))
+	for i := range projects {
+		byKey[projects[i].Key] = &projects[i]
+	}
+
+	var warnings []string
+	for _, issue := range issues {
+		project := byKey[issue.ProjectKey]
+		if project == nil {
+			continue
+		}
+		if issue.Status != "" && project.Workflow != nil && len(project.Workflow.Statuses) > 0 {
+			declared := false
+			for _, s := range project.Workflow.Statuses {
+				if s.ID == issue.Status {
+					declared = true
+					break
+				}
+			}
+			if !declared {
+				warnings = append(warnings, fmt.Sprintf(
+					"issue %q has status %q, which project %q no longer declares",
+					issue.ID, issue.Status, issue.ProjectKey))
+			}
+		}
+		if issue.Type != "" && len(project.IssueTypes) > 0 && !slices.Contains(project.IssueTypes, issue.Type) {
+			warnings = append(warnings, fmt.Sprintf(
+				"issue %q has type %q, which project %q no longer declares",
+				issue.ID, issue.Type, issue.ProjectKey))
+		}
+	}
+	return warnings
 }
 
 func dirExists(path string) bool {

@@ -15,7 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import {IdentitySetupDialog} from '@/components/identity-setup-dialog';
-import {UserSettingsDialog} from '@/components/user-settings-dialog';
+import {AppSettingsDialog} from '@/components/app-settings-dialog';
 import {NewIssueDialog} from '@/components/new-issue-dialog';
 import {NewProjectDialog} from '@/components/new-project-dialog';
 import {IssueList} from '@/components/issue-list';
@@ -58,7 +58,7 @@ export function WorkspaceView() {
     const [newIssueOpen, setNewIssueOpen] = useState(false);
     const [newDocumentOpen, setNewDocumentOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const [settingsSection, setSettingsSection] = useState<SettingsSection>('issueTypes');
+    const [settingsSection, setSettingsSection] = useState<SettingsSection>('general');
     const [newProjectOpen, setNewProjectOpen] = useState(false);
     const [recentWorkspaces, setRecentWorkspaces] = useState<RecentWorkspace[]>([]);
 
@@ -341,7 +341,7 @@ export function WorkspaceView() {
             sidebarBody={sidebarBody}
             toolbar={toolbar}
             tabBar={tabBar}
-            onSettingsClick={() => activeProject && openSettings('issueTypes')}
+            onSettingsClick={() => activeProject && openSettings('general')}
             onUserSettingsClick={() => setUserSettingsOpen(true)}
         >
             <div className="flex flex-col gap-4">
@@ -495,6 +495,7 @@ export function WorkspaceView() {
                 <ProjectSettingsDialog
                     path={path}
                     project={activeProject}
+                    users={ws.users}
                     open={settingsOpen}
                     onOpenChange={setSettingsOpen}
                     onSaved={() => void reload()}
@@ -508,7 +509,7 @@ export function WorkspaceView() {
                     onSaved={setIdentity}
                 />
 
-                <UserSettingsDialog
+                <AppSettingsDialog
                     path={path}
                     open={userSettingsOpen}
                     onOpenChange={setUserSettingsOpen}

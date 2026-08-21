@@ -18,6 +18,10 @@ export function ArchiveProject(arg1:string,arg2:string):Promise<workspace.Projec
 
 export function CloneProjectRepos(arg1:string,arg2:string):Promise<workspace.CloneResult>;
 
+export function CountIssuesByStatus(arg1:string,arg2:string,arg3:string):Promise<number>;
+
+export function CountIssuesByType(arg1:string,arg2:string,arg3:string):Promise<number>;
+
 export function CreateIssue(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.Issue>;
 
 export function CreateProject(arg1:string,arg2:string,arg3:string):Promise<workspace.Project>;
@@ -56,6 +60,10 @@ export function RemoveProjectRepo(arg1:string,arg2:string,arg3:string):Promise<w
 
 export function RemoveUser(arg1:string,arg2:string):Promise<void>;
 
+export function RenameIssueType(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.Project>;
+
+export function RenameStatus(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.Project>;
+
 export function SelectWorkspaceFolder(arg1:string):Promise<string>;
 
 export function SetActiveProfile(arg1:string,arg2:string):Promise<void>;
@@ -71,6 +79,8 @@ export function SetIssuePriority(arg1:string,arg2:string,arg3:string):Promise<wo
 export function SetIssueTitle(arg1:string,arg2:string,arg3:string):Promise<workspace.Issue>;
 
 export function SetProjectIssueTypes(arg1:string,arg2:string,arg3:Array<string>):Promise<workspace.Project>;
+
+export function SetProjectName(arg1:string,arg2:string,arg3:string):Promise<workspace.Project>;
 
 export function SetUserLinks(arg1:string,arg2:string,arg3:string,arg4:string):Promise<workspace.User>;
 

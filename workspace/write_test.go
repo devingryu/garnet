@@ -3,6 +3,7 @@ package workspace
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -658,5 +659,181 @@ func TestRemoveProjectRepo_NotFound(t *testing.T) {
 	root := copyFixture(t, "valid")
 	if _, err := RemoveProjectRepo(root, "GRNT", "does-not-exist"); err == nil {
 		t.Fatal("expected an error for a nonexistent repo path, got nil")
+	}
+}
+
+func TestSetProjectName(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	project, err := SetProjectName(root, "GRNT", "Renamed")
+	if err != nil {
+		t.Fatalf("SetProjectName() returned error: %v", err)
+	}
+	if project.Name != "Renamed" {
+		t.Errorf("expected name %q, got %q", "Renamed", project.Name)
+	}
+	if project.Key != "GRNT" {
+		t.Errorf("expected key preserved, got %q", project.Key)
+	}
+}
+
+func TestSetProjectName_RequiresName(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := SetProjectName(root, "GRNT", "  "); err == nil {
+		t.Fatal("expected an error for a blank name, got nil")
+	}
+}
+
+func TestSetWorkflow_RejectsDuplicateStatusID(t *testing.T) {
+	root := copyFixture(t, "valid")
+	statuses := []Status{
+		{ID: "todo", Name: "To Do", Category: "open"},
+		{ID: "todo", Name: "Also To Do", Category: "open"},
+	}
+	if _, err := SetWorkflow(root, "GRNT", statuses, nil); err == nil {
+		t.Fatal("expected an error for a duplicate status id, got nil")
+	}
+}
+
+func TestSetWorkflow_RejectsInvalidCategory(t *testing.T) {
+	root := copyFixture(t, "valid")
+	statuses := []Status{{ID: "todo", Name: "To Do", Category: "sometimes"}}
+	if _, err := SetWorkflow(root, "GRNT", statuses, nil); err == nil {
+		t.Fatal("expected an error for an unrecognized category, got nil")
+	}
+}
+
+func TestCountIssuesByStatus(t *testing.T) {
+	root := copyFixture(t, "valid")
+	count, err := CountIssuesByStatus(root, "GRNT", "in-progress")
+	if err != nil {
+		t.Fatalf("CountIssuesByStatus() returned error: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("expected 1 issue in-progress, got %d", count)
+	}
+}
+
+func TestCountIssuesByType(t *testing.T) {
+	root := copyFixture(t, "valid")
+	count, err := CountIssuesByType(root, "GRNT", "story")
+	if err != nil {
+		t.Fatalf("CountIssuesByType() returned error: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("expected 1 story issue, got %d", count)
+	}
+}
+
+func TestRenameStatus(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	project, err := RenameStatus(root, "GRNT", "in-progress", "doing")
+	if err != nil {
+		t.Fatalf("RenameStatus() returned error: %v", err)
+	}
+
+	var found *Status
+	for i := range project.Workflow.Statuses {
+		if project.Workflow.Statuses[i].ID == "doing" {
+			found = &project.Workflow.Statuses[i]
+		}
+	}
+	if found == nil {
+		t.Fatalf("expected renamed status in workflow, got %+v", project.Workflow.Statuses)
+	}
+	for _, tr := range project.Workflow.Transitions {
+		if tr.From == "in-progress" {
+			t.Errorf("expected no transition still referencing the old id, got %+v", tr)
+		}
+		for _, to := range tr.To {
+			if to == "in-progress" {
+				t.Errorf("expected no transition target still referencing the old id, got %+v", tr)
+			}
+		}
+	}
+
+	issue, err := loadIssue(filepath.Join(root, "issues", "GRNT-1"), "GRNT-1")
+	if err != nil {
+		t.Fatalf("loadIssue() returned error: %v", err)
+	}
+	if issue.Status != "doing" {
+		t.Errorf("expected GRNT-1's status rewritten to %q, got %q", "doing", issue.Status)
+	}
+}
+
+func TestRenameStatus_RejectsDuplicate(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := RenameStatus(root, "GRNT", "todo", "done"); err == nil {
+		t.Fatal("expected an error renaming a status to an id already in use, got nil")
+	}
+}
+
+func TestRenameStatus_NotFound(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := RenameStatus(root, "GRNT", "nonexistent", "whatever"); err == nil {
+		t.Fatal("expected an error renaming a status that doesn't exist, got nil")
+	}
+}
+
+func TestRenameIssueType(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	project, err := RenameIssueType(root, "GRNT", "story", "feature")
+	if err != nil {
+		t.Fatalf("RenameIssueType() returned error: %v", err)
+	}
+	if !slices.Contains(project.IssueTypes, "feature") || slices.Contains(project.IssueTypes, "story") {
+		t.Fatalf("unexpected issue types: %+v", project.IssueTypes)
+	}
+
+	issue, err := loadIssue(filepath.Join(root, "issues", "GRNT-1"), "GRNT-1")
+	if err != nil {
+		t.Fatalf("loadIssue() returned error: %v", err)
+	}
+	if issue.Type != "feature" {
+		t.Errorf("expected GRNT-1's type rewritten to %q, got %q", "feature", issue.Type)
+	}
+}
+
+func TestRenameIssueType_RejectsDuplicate(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := RenameIssueType(root, "GRNT", "story", "task"); err == nil {
+		t.Fatal("expected an error renaming an issue type to one already in use, got nil")
+	}
+}
+
+func TestRenameIssueType_NotFound(t *testing.T) {
+	root := copyFixture(t, "valid")
+	if _, err := RenameIssueType(root, "GRNT", "nonexistent", "whatever"); err == nil {
+		t.Fatal("expected an error renaming an issue type that doesn't exist, got nil")
+	}
+}
+
+func TestOpen_WarnsOnUndeclaredStatusAndType(t *testing.T) {
+	root := copyFixture(t, "valid")
+
+	dir := filepath.Join(root, "issues", "GRNT-1")
+	meta, err := readIssueMeta(dir)
+	if err != nil {
+		t.Fatalf("readIssueMeta() returned error: %v", err)
+	}
+	meta.Status = "nonexistent-status"
+	meta.Type = "nonexistent-type"
+	if err := writeIssueMeta(dir, meta); err != nil {
+		t.Fatalf("writeIssueMeta() returned error: %v", err)
+	}
+
+	ws, err := Open(root)
+	if err != nil {
+		t.Fatalf("Open() returned error: %v", err)
+	}
+
+	joined := strings.Join(ws.Warnings, "\n")
+	if !strings.Contains(joined, "nonexistent-status") {
+		t.Errorf("expected a warning about the undeclared status, got %v", ws.Warnings)
+	}
+	if !strings.Contains(joined, "nonexistent-type") {
+		t.Errorf("expected a warning about the undeclared type, got %v", ws.Warnings)
 	}
 }

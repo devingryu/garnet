@@ -3,6 +3,7 @@ import {useTranslation} from 'react-i18next';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {LanguageSelect} from '@/components/language-select';
 import {UserAvatar} from '@/components/user-avatar';
 import {useAsyncAction} from '@/lib/use-async-action';
 import {
@@ -16,14 +17,18 @@ import {
 } from '../../wailsjs/go/main/App';
 import type {Identity, Profile, User} from '@/lib/model';
 
-type Section = 'profiles' | 'people';
-const SECTIONS: Section[] = ['profiles', 'people'];
+type Section = 'general' | 'profiles' | 'people';
+const SECTIONS: Section[] = ['general', 'profiles', 'people'];
 
-/** Profiles (GARNET-6, app-level "who could I be") and People (GARNET-16's
- *  users.yaml, the workspace-shared display registry for any actor) share
- *  one dialog since both are about identity, but they're separate sections
- *  — different scope (app vs. workspace) and different data. */
-export function UserSettingsDialog({
+/**
+ * App settings (GARNET-26) — everything scoped to this person/machine, not
+ * this project: language (General), Profiles (GARNET-6, "who could I
+ * be"), and People (GARNET-16's users.yaml, the workspace-shared display
+ * registry for any actor). One dialog, three sections with different
+ * scope and data — General and Profiles are app-level, People is
+ * workspace-level but has nowhere else to live yet.
+ */
+export function AppSettingsDialog({
     path,
     open,
     onOpenChange,
@@ -44,13 +49,13 @@ export function UserSettingsDialog({
     onUsersChanged: () => void;
 }) {
     const {t} = useTranslation();
-    const [section, setSection] = useState<Section>('profiles');
+    const [section, setSection] = useState<Section>('general');
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{t('userSettings.heading')}</DialogTitle>
+                    <DialogTitle>{t('appSettings.heading')}</DialogTitle>
                 </DialogHeader>
 
                 <div className="flex gap-1 border-b border-border pb-2">
@@ -61,10 +66,17 @@ export function UserSettingsDialog({
                             size="sm"
                             onClick={() => setSection(s)}
                         >
-                            {t(`userSettings.section.${s}`)}
+                            {t(`appSettings.section.${s}`)}
                         </Button>
                     ))}
                 </div>
+
+                {section === 'general' && (
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs text-muted-foreground">{t('app.language')}</span>
+                        <LanguageSelect />
+                    </div>
+                )}
 
                 {/* Keyed on `open` so every reopen starts from what's
                     actually on disk (AGENTS.md rule 6), the same pattern

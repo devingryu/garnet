@@ -47,6 +47,11 @@ type Status struct {
 	Category string `yaml:"category" json:"category"`
 }
 
+// validStatusCategories are the only values statusCategoryClass (frontend)
+// treats as anything other than the "open" fallback — SetWorkflow rejects
+// anything else rather than accepting a typo that silently renders wrong.
+var validStatusCategories = map[string]bool{"open": true, "active": true, "closed": true}
+
 // Transition declares which statuses an issue may move to from a given status.
 type Transition struct {
 	From string   `yaml:"from" json:"from"`
@@ -173,6 +178,28 @@ func AddProjectMember(root, projectKey, name, email string) (*Project, error) {
 	return loadProject(dir)
 }
 
+// SetProjectName renames a project's display name. Unlike its key (which
+// prefixes every issue ID and can't be changed without renaming every issue
+// directory — GARNET-26 leaves that read-only), the name is just a label:
+// no issue stores a copy of it, so there's nothing to migrate.
+func SetProjectName(root, projectKey, name string) (*Project, error) {
+	if strings.TrimSpace(name) == "" {
+		return nil, errProjectNameRequired()
+	}
+
+	dir := filepath.Join(root, "projects", projectKey)
+	project, err := loadProject(dir)
+	if err != nil {
+		return nil, errProjectLoadFailed(projectKey, err)
+	}
+
+	project.Name = name
+	if err := writeProjectFrontmatter(dir, project); err != nil {
+		return nil, err
+	}
+	return loadProject(dir)
+}
+
 // SetProjectIssueTypes replaces a project's declared issue types wholesale —
 // the editor UI always resends the full list, so there's no partial update
 // to reconcile.
@@ -204,7 +231,13 @@ func SetWorkflow(root, projectKey string, statuses []Status, transitions []Trans
 
 	ids := map[string]bool{}
 	for _, s := range statuses {
+		if ids[s.ID] {
+			return nil, errDuplicateStatusID(s.ID)
+		}
 		ids[s.ID] = true
+		if !validStatusCategories[s.Category] {
+			return nil, errInvalidStatusCategory(s.Category)
+		}
 	}
 	for _, t := range transitions {
 		if !ids[t.From] {
@@ -225,6 +258,214 @@ func SetWorkflow(root, projectKey string, statuses []Status, transitions []Trans
 	if err := writeFile(filepath.Join(dir, "workflow.md"), joinFrontmatter(fm, "")); err != nil {
 		return nil, err
 	}
+	return loadProject(dir)
+}
+
+// projectIssueDirs returns the issues/<projectKey>-<n> directory names for
+// projectKey, sharing nextIssueID's prefix-match logic rather than loading
+// every Issue in the workspace just to filter by ProjectKey.
+func projectIssueDirs(root, projectKey string) ([]string, error) {
+	names, err := subdirNames(filepath.Join(root, "issues"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	prefix := projectKey + "-"
+	var dirs []string
+	for _, name := range names {
+		if strings.HasPrefix(name, prefix) {
+			dirs = append(dirs, name)
+		}
+	}
+	return dirs, nil
+}
+
+// CountIssuesByStatus reports how many of projectKey's issues currently
+// have statusID — the number a rename confirmation names before committing
+// to the rewrite RenameStatus performs.
+func CountIssuesByStatus(root, projectKey, statusID string) (int, error) {
+	dirs, err := projectIssueDirs(root, projectKey)
+	if err != nil {
+		return 0, err
+	}
+	count := 0
+	for _, name := range dirs {
+		meta, err := readIssueMeta(filepath.Join(root, "issues", name))
+		if err != nil {
+			continue // malformed issue; Open already reports it separately
+		}
+		if meta.Status == statusID {
+			count++
+		}
+	}
+	return count, nil
+}
+
+// CountIssuesByType is CountIssuesByStatus's counterpart for issue types.
+func CountIssuesByType(root, projectKey, issueType string) (int, error) {
+	dirs, err := projectIssueDirs(root, projectKey)
+	if err != nil {
+		return 0, err
+	}
+	count := 0
+	for _, name := range dirs {
+		meta, err := readIssueMeta(filepath.Join(root, "issues", name))
+		if err != nil {
+			continue
+		}
+		if meta.Type == issueType {
+			count++
+		}
+	}
+	return count, nil
+}
+
+// RenameStatus changes a status's id everywhere it's referenced: the
+// workflow's own status list and transitions, and every issue currently in
+// it. One call rather than a definition-only edit, because a status id
+// isn't a label — GARNET-26 treats renaming one as the migration it
+// actually is, not a settings tweak (contrast Status.Name, which is
+// display-only and needs no rewrite at all).
+func RenameStatus(root, projectKey, oldID, newID string) (*Project, error) {
+	newID = strings.TrimSpace(newID)
+	if newID == "" {
+		return nil, errStatusIDRequired()
+	}
+	if newID == oldID {
+		return loadProject(filepath.Join(root, "projects", projectKey))
+	}
+
+	dir := filepath.Join(root, "projects", projectKey)
+	project, err := loadProject(dir)
+	if err != nil {
+		return nil, errProjectLoadFailed(projectKey, err)
+	}
+	if project.Workflow == nil {
+		return nil, errStatusNotDeclared(oldID)
+	}
+
+	found := false
+	for _, s := range project.Workflow.Statuses {
+		if s.ID == newID {
+			return nil, errDuplicateStatusID(newID)
+		}
+		if s.ID == oldID {
+			found = true
+		}
+	}
+	if !found {
+		return nil, errStatusNotDeclared(oldID)
+	}
+
+	statuses := make([]Status, len(project.Workflow.Statuses))
+	for i, s := range project.Workflow.Statuses {
+		if s.ID == oldID {
+			s.ID = newID
+		}
+		statuses[i] = s
+	}
+	transitions := make([]Transition, len(project.Workflow.Transitions))
+	for i, t := range project.Workflow.Transitions {
+		if t.From == oldID {
+			t.From = newID
+		}
+		for j, to := range t.To {
+			if to == oldID {
+				t.To[j] = newID
+			}
+		}
+		transitions[i] = t
+	}
+	wf := Workflow{Statuses: statuses, Transitions: transitions}
+	fm, err := yaml.Marshal(wf)
+	if err != nil {
+		return nil, fmt.Errorf("encoding workflow.md: %w", err)
+	}
+	if err := writeFile(filepath.Join(dir, "workflow.md"), joinFrontmatter(fm, "")); err != nil {
+		return nil, err
+	}
+
+	dirs, err := projectIssueDirs(root, projectKey)
+	if err != nil {
+		return nil, err
+	}
+	for _, name := range dirs {
+		issueDir := filepath.Join(root, "issues", name)
+		meta, err := readIssueMeta(issueDir)
+		if err != nil {
+			continue
+		}
+		if meta.Status != oldID {
+			continue
+		}
+		meta.Status = newID
+		if err := writeIssueMeta(issueDir, meta); err != nil {
+			return nil, err
+		}
+	}
+
+	return loadProject(dir)
+}
+
+// RenameIssueType is RenameStatus's counterpart for issue types: rewrites
+// the project's declared list and every issue currently holding the old
+// type, in one call.
+func RenameIssueType(root, projectKey, oldType, newType string) (*Project, error) {
+	newType = strings.TrimSpace(newType)
+	if newType == "" {
+		return nil, errIssueTypeRequired()
+	}
+	if newType == oldType {
+		return loadProject(filepath.Join(root, "projects", projectKey))
+	}
+
+	dir := filepath.Join(root, "projects", projectKey)
+	project, err := loadProject(dir)
+	if err != nil {
+		return nil, errProjectLoadFailed(projectKey, err)
+	}
+
+	found := false
+	types := make([]string, len(project.IssueTypes))
+	for i, t := range project.IssueTypes {
+		if t == newType {
+			return nil, errIssueTypeAlreadyExists(newType, projectKey)
+		}
+		if t == oldType {
+			found = true
+			t = newType
+		}
+		types[i] = t
+	}
+	if !found {
+		return nil, errIssueTypeNotDeclared(oldType, projectKey)
+	}
+	project.IssueTypes = types
+	if err := writeProjectFrontmatter(dir, project); err != nil {
+		return nil, err
+	}
+
+	dirs, err := projectIssueDirs(root, projectKey)
+	if err != nil {
+		return nil, err
+	}
+	for _, name := range dirs {
+		issueDir := filepath.Join(root, "issues", name)
+		meta, err := readIssueMeta(issueDir)
+		if err != nil {
+			continue
+		}
+		if meta.Type != oldType {
+			continue
+		}
+		meta.Type = newType
+		if err := writeIssueMeta(issueDir, meta); err != nil {
+			return nil, err
+		}
+	}
+
 	return loadProject(dir)
 }
 
